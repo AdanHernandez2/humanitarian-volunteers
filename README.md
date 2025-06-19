@@ -2,6 +2,7 @@
 
 ## Estructura del plugin
 
-![Estructura](https://res.cloudinary.com/www-scriptdan-xyz/image/upload/v1750302641/Img/kl09sr7bulht7qoxvkgl.png)
+<img src="https://res.cloudinary.com/www-scriptdan-xyz/image/upload/v1750302641/Img/kl09sr7bulht7qoxvkgl.png" alt="Estructura" style="max-width: 400px; height: auto;" />
 
-![Flujo](https://res.cloudinary.com/www-scriptdan-xyz/image/upload/v1750302813/Img/htxetxlmpyseckulyrwb.png)
+<img src="https://res.cloudinary.com/www-scriptdan-xyz/image/upload/v1750302813/Img/htxetxlmpyseckulyrwb.png" alt="Flujo" style="max-width: 300px; height: auto;" />
+
