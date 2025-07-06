@@ -1,0 +1,44 @@
+.hv-admin-volunteers {
+  padding: 20px;
+}
+
+.hv-admin-volunteers .filters {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.hv-admin-volunteers .table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.hv-admin-volunteers .table th {
+  background-color: #343a40;
+  color: white;
+  position: sticky;
+  top: 0;
+}
+
+.hv-admin-volunteers .table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.hv-admin-volunteers .table tr:hover {
+  background-color: #e9ecef;
+}
+
+.hv-admin-volunteers .badge {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-weight: normal;
+}
+
+.hv-admin-volunteers .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}

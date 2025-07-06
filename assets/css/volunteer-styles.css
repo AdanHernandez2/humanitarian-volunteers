@@ -1,0 +1,118 @@
+/* Estilos generales */
+.hv-admin-volunteers,
+.volunteer-profile {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Filtros */
+.hv-admin-volunteers .filters {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+/* Tabla */
+.hv-admin-volunteers .table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.hv-admin-volunteers .table th {
+  background-color: #343a40;
+  color: white;
+  position: sticky;
+  top: 0;
+}
+
+.hv-admin-volunteers .table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.hv-admin-volunteers .table tr:hover {
+  background-color: #e9ecef;
+}
+
+/* Badges */
+.hv-admin-volunteers .badge,
+.volunteer-profile .badge {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-weight: normal;
+}
+
+/* Botones */
+.hv-admin-volunteers .btn-sm,
+.volunteer-profile .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+/* Perfil de voluntario */
+.volunteer-profile .card {
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.volunteer-profile .card-header {
+  padding: 12px 20px;
+}
+
+.volunteer-profile .card-body {
+  padding: 20px;
+}
+
+.volunteer-profile .row {
+  margin-bottom: 15px;
+}
+
+.volunteer-profile p {
+  margin-bottom: 10px;
+}
+
+/* Formulario de voluntarios */
+.hv-form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.hv-form-container .card {
+  margin-bottom: 20px;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+.hv-form-container .card-header {
+  padding: 0.75rem 1.25rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.hv-form-container .card-body {
+  padding: 1.25rem;
+}
+
+.hv-form-container .form-label {
+  font-weight: 500;
+}
+
+.hv-form-container .text-danger {
+  color: #dc3545;
+}
+
+.hv-form-container .form-check {
+  margin-bottom: 0.5rem;
+}
+
+.hv-form-container .btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.1rem;
+}
