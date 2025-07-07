@@ -137,6 +137,66 @@ class Volunteer_Profile
                     </div>
                 </div>
 
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title">Documento de Identidad</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        $user_id = $_GET['user_id'] ?? 0;
+                        $document_id = get_user_meta($user_id, 'hv_identity_document', true);
+
+                        if ($document_id && is_numeric($document_id)) {
+                            $document_url = wp_get_attachment_url($document_id);
+                            $file_type = get_post_mime_type($document_id);
+                            $is_image = strpos($file_type, 'image') !== false;
+                        ?>
+
+                            <?php if ($is_image): ?>
+                                <img src="<?php echo esc_url($document_url); ?>"
+                                    class="img-fluid rounded border"
+                                    style="max-height: 300px;"
+                                    alt="Documento de identidad">
+                            <?php else: ?>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-file-pdf fa-3x text-danger me-3"></i>
+                                    <div>
+                                        <a href="<?php echo esc_url($document_url); ?>"
+                                            target="_blank"
+                                            class="btn btn-outline-primary">
+                                            <i class="fas fa-download me-2"></i>
+                                            Descargar documento (PDF)
+                                        </a>
+                                        <p class="mt-2 small text-muted">
+                                            <?php echo basename(get_attached_file($document_id)); ?>
+                                        </p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="mt-3">
+                                <a href="<?php echo esc_url($document_url); ?>"
+                                    target="_blank"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    Ver documento completo
+                                </a>
+
+                                <?php if (current_user_can('manage_options')): ?>
+                                    <a href="<?php echo admin_url("post.php?post=$document_id&action=edit"); ?>"
+                                        class="btn btn-sm btn-outline-secondary ms-2">
+                                        Administrar documento
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        <?php } else { ?>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Este usuario no ha subido documento de identidad
+                            </div>
+                        <?php } ?>
+                    </div>
+                </div>
+
             </div>
             <div class="mt-4">
                 <a href="<?php echo admin_url('user-edit.php?user_id=' . $user_id); ?>" class="btn btn-primary">

@@ -1,6 +1,6 @@
 <?php
 // templates/emails/email-user-verified.php
-include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
+include HV_PLUGIN_PATH . 'templates/email-header.php';
 
 /**
  * Variables disponibles:
@@ -9,32 +9,33 @@ include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
  */
 ?>
 
-<h2 style="color: #0d6efd; margin-top: 0;">¡Felicidades, eres ahora un voluntario verificado!</h2>
-<p>Hola <?php echo esc_html($user_data['full_name']); ?>,</p>
-
-<p>Nos complace informarte que tu registro como voluntario ha sido aprobado. Ahora formas parte de nuestra red de voluntarios humanitarios.</p>
-
-<div style="background-color: #f0f8ff; border-left: 4px solid #0d6efd; padding: 15px; margin: 20px 0;">
-    <h3 style="margin-top: 0; color: #0d6efd;">Tu código único de voluntario</h3>
-    <p style="font-size: 24px; font-weight: bold; text-align: center; margin: 15px 0;">
-        <?php echo esc_html($unique_code); ?>
-    </p>
-    <p>Este código te identificará en nuestras actividades y eventos. Te recomendamos guardarlo.</p>
+<div class="header">
+    <h2>¡Felicidades <?php echo $name; ?>!</h2>
+    <p>Tu registro como voluntario ha sido verificado</p>
 </div>
 
-<p>Puedes acceder a tu perfil en cualquier momento para actualizar tu información o ver las actividades disponibles.</p>
+<div class="content">
+    <p>Estamos encantados de informarte que tu registro como voluntario en <?php echo $site_name; ?> ha sido verificado y aprobado.</p>
 
-<p style="text-align: center; margin-top: 30px;">
-    <a href="<?php echo home_url('/mi-perfil'); ?>" class="btn">
-        Acceder a mi perfil
-    </a>
-</p>
+    <p>Tu código único de voluntario es:</p>
 
-<p>¡Gracias por unirte a esta causa humanitaria!</p>
+    <div class="verification-code">
+        <?php echo $code; ?>
+    </div>
 
-<p style="margin-top: 30px;">
-    Atentamente,<br>
-    <strong>Equipo Humanitarios</strong>
-</p>
+    <p>Este código te identificará como voluntario en nuestras actividades. Por favor guárdalo en un lugar seguro.</p>
 
-<?php include HV_PLUGIN_PATH . 'templates/emails/email-footer.php'; ?>
+    <p>Adjunto a este correo encontrarás tu credencial digital de voluntario. Puedes imprimirla o guardarla en tu dispositivo móvil.</p>
+
+    <p>Pronto te contactaremos con información sobre próximas actividades y oportunidades de voluntariado.</p>
+
+    <p>¡Gracias por unirte a nuestra comunidad de voluntarios!</p>
+</div>
+
+<div class="footer">
+    <p>Este es un mensaje automático. Por favor no respondas a este correo.</p>
+    <p>&copy; <?php echo date('Y'); ?> <?php echo $site_name; ?></p>
+</div>
+
+
+<?php include HV_PLUGIN_PATH . 'templates/email-footer.php'; ?>

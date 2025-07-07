@@ -1,6 +1,6 @@
 <?php
 // templates/emails/email-admin-new.php
-include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
+include HV_PLUGIN_PATH . 'templates/email-header.php';
 
 /**
  * Variables disponibles:
@@ -10,67 +10,33 @@ include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
  */
 ?>
 
-<h2 style="color: #0d6efd; margin-top: 0;">Nuevo Voluntario Registrado</h2>
-<p>Se ha registrado un nuevo voluntario en la plataforma. Aquí los detalles:</p>
+<div class="header">
+    <h2>Nuevo Voluntario Registrado</h2>
+</div>
 
-<table>
-    <tr>
-        <td>Nombre completo:</td>
-        <td><?php echo esc_html($user_data['full_name']); ?></td>
-    </tr>
-    <tr>
-        <td>Correo electrónico:</td>
-        <td><?php echo esc_html($user_data['email']); ?></td>
-    </tr>
-    <tr>
-        <td>Teléfono:</td>
-        <td><?php echo esc_html($user_data['phone']); ?></td>
-    </tr>
-    <tr>
-        <td>Provincia:</td>
-        <td><?php echo esc_html($user_data['province']); ?></td>
-    </tr>
-    <tr>
-        <td>Área de interés:</td>
-        <td>
-            <?php echo esc_html($user_data['skills']); ?>
-            <?php if (!empty($user_data['skills_other'])) : ?>
-                <br><small>Especificación: <?php echo esc_html($user_data['skills_other']); ?></small>
-            <?php endif; ?>
-        </td>
-    </tr>
-    <tr>
-        <td>Documento de identidad:</td>
-        <td>
-            <?php if ($document_url) : ?>
-                <a href="<?php echo esc_url($document_url); ?>" target="_blank">
-                    Ver documento de identidad
-                </a>
-            <?php else : ?>
-                No se subió documento
-            <?php endif; ?>
-        </td>
-    </tr>
-</table>
+<div class="content">
+    <p>Hola equipo,</p>
 
-<h3>Disponibilidad</h3>
-<p>
-    <strong>Fines de semana:</strong> <?php echo esc_html($user_data['weekend_availability']); ?><br>
-    <strong>Viajar al interior:</strong> <?php echo esc_html($user_data['travel_availability']); ?>
-</p>
+    <p>Se ha registrado un nuevo voluntario en la plataforma:</p>
 
-<h3>Experiencia en Voluntariado</h3>
-<p>
-    <strong>¿Tiene experiencia?:</strong> <?php echo esc_html($user_data['has_experience']); ?><br>
-    <?php if (!empty($user_data['experience_desc'])) : ?>
-        <strong>Descripción:</strong> <?php echo esc_html($user_data['experience_desc']); ?>
-    <?php endif; ?>
-</p>
+    <ul>
+        <li><strong>Nombre:</strong> <?php echo $name; ?></li>
+        <li><strong>Email:</strong> <?php echo $email; ?></li>
+        <li><strong>Teléfono:</strong> <?php echo $phone; ?></li>
+        <li><strong>Provincia:</strong> <?php echo $province; ?></li>
+        <li><strong>Habilidades:</strong> <?php echo $skills; ?></li>
+    </ul>
 
-<p style="text-align: center; margin-top: 30px;">
-    <a href="<?php echo admin_url('admin.php?page=volunteers'); ?>" class="btn">
-        Ver perfil completo en el panel
-    </a>
-</p>
+    <p>Puedes revisar el perfil completo del voluntario aquí:</p>
+    <p><a href="<?php echo $profile_link; ?>"><?php echo $profile_link; ?></a></p>
 
-<?php include HV_PLUGIN_PATH . 'templates/emails/email-footer.php'; ?>
+    <p>Por favor verifica la información y procede con la validación del documento de identidad.</p>
+</div>
+
+<div class="footer">
+    <p>Este es un mensaje automático. Por favor no respondas a este correo.</p>
+    <p>&copy; <?php echo date('Y'); ?> <?php echo get_bloginfo('name'); ?></p>
+</div>
+
+
+<?php include HV_PLUGIN_PATH . 'templates/email-footer.php'; ?>

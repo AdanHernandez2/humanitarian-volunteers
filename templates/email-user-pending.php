@@ -1,6 +1,6 @@
 <?php
 // templates/emails/email-user-pending.php
-include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
+include HV_PLUGIN_PATH . 'templates/email-header.php';
 
 /**
  * Variables disponibles:
@@ -8,43 +8,26 @@ include HV_PLUGIN_PATH . 'templates/emails/email-header.php';
  */
 ?>
 
-<h2 style="color: #0d6efd; margin-top: 0;">¡Gracias por registrarte como voluntario!</h2>
-<p>Hola <?php echo esc_html($user_data['full_name']); ?>,</p>
+<div class="header">
+    <h2>¡Gracias por Registrarte!</h2>
+</div>
 
-<p>Hemos recibido tu solicitud para unirte a nuestro equipo de voluntarios en Humanitarios. Estamos revisando tu información y pronto te notificaremos sobre el estado de tu registro.</p>
+<div class="content">
+    <p>Hola <?php echo $name; ?>,</p>
 
-<p>Estos son los datos que hemos recibido:</p>
+    <p>Gracias por registrarte como voluntario en <?php echo $site_name; ?>. Hemos recibido tu solicitud y estamos procesando tu información.</p>
 
-<table>
-    <tr>
-        <td>Nombre completo:</td>
-        <td><?php echo esc_html($user_data['full_name']); ?></td>
-    </tr>
-    <tr>
-        <td>Correo electrónico:</td>
-        <td><?php echo esc_html($user_data['email']); ?></td>
-    </tr>
-    <tr>
-        <td>Teléfono:</td>
-        <td><?php echo esc_html($user_data['phone']); ?></td>
-    </tr>
-    <tr>
-        <td>Provincia:</td>
-        <td><?php echo esc_html($user_data['province']); ?></td>
-    </tr>
-    <tr>
-        <td>Área de interés:</td>
-        <td><?php echo esc_html($user_data['skills']); ?></td>
-    </tr>
-</table>
+    <p>Nuestro equipo revisará tus datos y documento de identidad. Te notificaremos por correo electrónico una vez que tu registro haya sido verificado.</p>
 
-<p>Si necesitas actualizar tu información, por favor responde a este correo.</p>
+    <p>Este proceso puede tomar de 1 a 3 días hábiles. Si necesitas información adicional, puedes contactarnos en <?php echo $contact_email; ?>.</p>
 
-<p>¡Gracias por tu interés en ser parte de Humanitarios!</p>
+    <p>¡Gracias por tu interés en ser parte de nuestro equipo de voluntarios!</p>
+</div>
 
-<p style="margin-top: 30px;">
-    Atentamente,<br>
-    <strong>Equipo Humanitarios</strong>
-</p>
+<div class="footer">
+    <p>Este es un mensaje automático. Por favor no respondas a este correo.</p>
+    <p>&copy; <?php echo date('Y'); ?> <?php echo $site_name; ?></p>
+</div>
 
-<?php include HV_PLUGIN_PATH . 'templates/emails/email-footer.php'; ?>
+
+<?php include HV_PLUGIN_PATH . 'templates/email-footer.php'; ?>

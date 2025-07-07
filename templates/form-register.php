@@ -1,12 +1,53 @@
 <?php
+
+// Seguridad: Bloquear acceso directo
+defined('ABSPATH') || exit();
+
+// Redirigir si el usuario no está logueado
+if (!is_user_logged_in()) {
+    wp_redirect(home_url());
+    exit;
+}
 // Precargar datos del usuario si está logueado
 $current_user = wp_get_current_user();
 $user_data = [
     'full_name' => $current_user->exists() ? $current_user->display_name : '',
     'email' => $current_user->exists() ? $current_user->user_email : '',
     'first_name' => $current_user->exists() ? $current_user->first_name : '',
-    'last_name' => $current_user->exists() ? $current_user->last_name : ''
+    'last_name' => $current_user->exists() ? $current_user->last_name : '',
 ];
+
+// Obtener todos los metadatos del usuario si está logueado
+$user_meta = [];
+if ($current_user->exists()) {
+    // Lista de todos los metadatos que hemos guardado
+    $meta_keys = [
+        'hv_id_number',
+        'hv_birth_date',
+        'hv_province',
+        'hv_phone',
+        'hv_skills',
+        'hv_skills_other',
+        'hv_weekend_availability',
+        'hv_travel_availability',
+        'hv_has_experience',
+        'hv_experience_desc',
+        'hv_nationality',
+        'hv_gender',
+        'hv_blood_type',
+        'hv_shirt_size',
+        'hv_profession',
+        'hv_medical_condition',
+        'hv_references'
+    ];
+
+    foreach ($meta_keys as $key) {
+        $user_meta[$key] = get_user_meta($current_user->ID, $key, true);
+    }
+
+    // Obtener documento subido si existe
+    $user_meta['hv_identity_document'] = get_user_meta($current_user->ID, 'hv_identity_document', true);
+}
 ?>
 
 <div class="container hv-form-container">
@@ -36,11 +77,13 @@ $user_data = [
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="id_number" class="form-label">Cédula</label>
-                        <input type="text" class="form-control" id="id_number" name="id_number">
+                        <input type="text" class="form-control" id="id_number" name="id_number"
+                            value="<?php echo isset($user_meta['hv_id_number']) ? esc_attr($user_meta['hv_id_number']) : ''; ?>">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="birth_date" class="form-label">Fecha de nacimiento <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="birth_date" name="birth_date" required>
+                        <input type="date" class="form-control" id="birth_date" name="birth_date"
+                            value="<?php echo isset($user_meta['hv_birth_date']) ? esc_attr($user_meta['hv_birth_date']) : ''; ?>" required>
                     </div>
                 </div>
 
@@ -49,18 +92,21 @@ $user_data = [
                         <label for="province" class="form-label">Provincia de residencia <span class="text-danger">*</span></label>
                         <select class="form-select" id="province" name="province" required>
                             <option value="">Seleccionar</option>
-                            <option value="San José">San José</option>
-                            <option value="Alajuela">Alajuela</option>
-                            <option value="Cartago">Cartago</option>
-                            <option value="Heredia">Heredia</option>
-                            <option value="Guanacaste">Guanacaste</option>
-                            <option value="Puntarenas">Puntarenas</option>
-                            <option value="Limón">Limón</option>
+                            <?php
+                            $provinces = ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Guanacaste', 'Puntarenas', 'Limón'];
+                            $selected_province = isset($user_meta['hv_province']) ? $user_meta['hv_province'] : '';
+
+                            foreach ($provinces as $province) {
+                                $selected = ($province === $selected_province) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($province) . '" ' . $selected . '>' . esc_html($province) . '</option>';
+                            }
+                            ?>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="phone" class="form-label">Teléfono / WhatsApp <span class="text-danger">*</span></label>
-                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                            value="<?php echo isset($user_meta['hv_phone']) ? esc_attr($user_meta['hv_phone']) : ''; ?>" required>
                     </div>
                 </div>
 
@@ -80,30 +126,37 @@ $user_data = [
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">Selecciona tu área de interés <span class="text-danger">*</span></label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="skills" id="skills1" value="Emergencias y desastres" required>
-                        <label class="form-check-label" for="skills1">Emergencias y desastres</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="skills" id="skills2" value="Logística y distribución" required>
-                        <label class="form-check-label" for="skills2">Logística y distribución</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="skills" id="skills3" value="Salud (médico, enfermería, psicología)" required>
-                        <label class="form-check-label" for="skills3">Salud (médico, enfermería, psicología)</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="skills" id="skills4" value="Tecnología / Soporte" required>
-                        <label class="form-check-label" for="skills4">Tecnología / Soporte</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="skills" id="skills5" value="Otro" required>
-                        <label class="form-check-label" for="skills5">Otro</label>
-                    </div>
+                    <?php
+                    $skills_options = [
+                        'Emergencias y desastres',
+                        'Logística y distribución',
+                        'Salud (médico, enfermería, psicología)',
+                        'Tecnología / Soporte',
+                        'Otro'
+                    ];
+
+                    $selected_skill = isset($user_meta['hv_skills']) ? $user_meta['hv_skills'] : '';
+                    ?>
+
+                    <?php foreach ($skills_options as $index => $skill): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="skills"
+                                id="skills<?php echo $index + 1; ?>"
+                                value="<?php echo esc_attr($skill); ?>"
+                                <?php if ($skill === $selected_skill) echo 'checked'; ?>
+                                required>
+                            <label class="form-check-label" for="skills<?php echo $index + 1; ?>">
+                                <?php echo esc_html($skill); ?>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-                <div class="mb-3" id="skills_other_container" style="display:none;">
+                <div class="mb-3" id="skills_other_container"
+                    style="<?php echo ($selected_skill === 'Otro') ? '' : 'display:none;'; ?>">
                     <label for="skills_other" class="form-label">Especificar otro</label>
-                    <input type="text" class="form-control" id="skills_other" name="skills_other">
+                    <input type="text" class="form-control" id="skills_other" name="skills_other"
+                        value="<?php echo isset($user_meta['hv_skills_other']) ? esc_attr($user_meta['hv_skills_other']) : ''; ?>"
+                        <?php echo ($selected_skill === 'Otro') ? 'required' : ''; ?>>
                 </div>
             </div>
         </div>
@@ -117,23 +170,37 @@ $user_data = [
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">¿Disponible fines de semana? <span class="text-danger">*</span></label>
+                        <?php
+                        $weekend_availability = isset($user_meta['hv_weekend_availability']) ? $user_meta['hv_weekend_availability'] : '';
+                        ?>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="weekend_availability" id="weekend_yes" value="Sí" required>
+                            <input class="form-check-input" type="radio" name="weekend_availability"
+                                id="weekend_yes" value="Sí"
+                                <?php if ($weekend_availability === 'Sí') echo 'checked'; ?> required>
                             <label class="form-check-label" for="weekend_yes">Sí</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="weekend_availability" id="weekend_no" value="No" required>
+                            <input class="form-check-input" type="radio" name="weekend_availability"
+                                id="weekend_no" value="No"
+                                <?php if ($weekend_availability === 'No') echo 'checked'; ?> required>
                             <label class="form-check-label" for="weekend_no">No</label>
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">¿Puede viajar al interior? <span class="text-danger">*</span></label>
+                        <?php
+                        $travel_availability = isset($user_meta['hv_travel_availability']) ? $user_meta['hv_travel_availability'] : '';
+                        ?>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="travel_availability" id="travel_yes" value="Sí" required>
+                            <input class="form-check-input" type="radio" name="travel_availability"
+                                id="travel_yes" value="Sí"
+                                <?php if ($travel_availability === 'Sí') echo 'checked'; ?> required>
                             <label class="form-check-label" for="travel_yes">Sí</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="travel_availability" id="travel_no" value="No" required>
+                            <input class="form-check-input" type="radio" name="travel_availability"
+                                id="travel_no" value="No"
+                                <?php if ($travel_availability === 'No') echo 'checked'; ?> required>
                             <label class="form-check-label" for="travel_no">No</label>
                         </div>
                     </div>
@@ -149,18 +216,29 @@ $user_data = [
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">¿Tiene experiencia? <span class="text-danger">*</span></label>
+                    <?php
+                    $has_experience = isset($user_meta['hv_has_experience']) ? $user_meta['hv_has_experience'] : '';
+                    ?>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="has_experience" id="experience_yes" value="Sí" required>
+                        <input class="form-check-input" type="radio" name="has_experience"
+                            id="experience_yes" value="Sí"
+                            <?php if ($has_experience === 'Sí') echo 'checked'; ?> required>
                         <label class="form-check-label" for="experience_yes">Sí</label>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="radio" name="has_experience" id="experience_no" value="No" required>
+                        <input class="form-check-input" type="radio" name="has_experience"
+                            id="experience_no" value="No"
+                            <?php if ($has_experience === 'No') echo 'checked'; ?> required>
                         <label class="form-check-label" for="experience_no">No</label>
                     </div>
                 </div>
-                <div class="mb-3" id="experience_desc_container" style="display:none;">
+                <div class="mb-3" id="experience_desc_container"
+                    style="<?php echo ($has_experience === 'Sí') ? '' : 'display:none;'; ?>">
                     <label for="experience_desc" class="form-label">Descripción breve</label>
-                    <textarea class="form-control" id="experience_desc" name="experience_desc" rows="3"></textarea>
+                    <textarea class="form-control" id="experience_desc" name="experience_desc" rows="3"
+                        <?php echo ($has_experience === 'Sí') ? 'required' : ''; ?>><?php
+                                                                                    echo isset($user_meta['hv_experience_desc']) ? esc_textarea($user_meta['hv_experience_desc']) : '';
+                                                                                    ?></textarea>
                 </div>
             </div>
         </div>
@@ -174,16 +252,22 @@ $user_data = [
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="nationality" class="form-label">Nacionalidad</label>
-                        <input type="text" class="form-control" id="nationality" name="nationality">
+                        <input type="text" class="form-control" id="nationality" name="nationality"
+                            value="<?php echo isset($user_meta['hv_nationality']) ? esc_attr($user_meta['hv_nationality']) : ''; ?>">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="gender" class="form-label">Género</label>
                         <select class="form-select" id="gender" name="gender">
                             <option value="">Seleccionar</option>
-                            <option value="Masculino">Masculino</option>
-                            <option value="Femenino">Femenino</option>
-                            <option value="Otro">Otro</option>
-                            <option value="Prefiero no decirlo">Prefiero no decirlo</option>
+                            <?php
+                            $genders = ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo'];
+                            $selected_gender = isset($user_meta['hv_gender']) ? $user_meta['hv_gender'] : '';
+
+                            foreach ($genders as $gender) {
+                                $selected = ($gender === $selected_gender) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($gender) . '" ' . $selected . '>' . esc_html($gender) . '</option>';
+                            }
+                            ?>
                         </select>
                     </div>
                 </div>
@@ -193,26 +277,30 @@ $user_data = [
                         <label for="blood_type" class="form-label">Tipo de sangre</label>
                         <select class="form-select" id="blood_type" name="blood_type">
                             <option value="">Seleccionar</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
+                            <?php
+                            $blood_types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                            $selected_blood = isset($user_meta['hv_blood_type']) ? $user_meta['hv_blood_type'] : '';
+
+                            foreach ($blood_types as $type) {
+                                $selected = ($type === $selected_blood) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($type) . '" ' . $selected . '>' . esc_html($type) . '</option>';
+                            }
+                            ?>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="shirt_size" class="form-label">Talla de camiseta</label>
                         <select class="form-select" id="shirt_size" name="shirt_size">
                             <option value="">Seleccionar</option>
-                            <option value="XS">XS</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
+                            <?php
+                            $shirt_sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+                            $selected_size = isset($user_meta['hv_shirt_size']) ? $user_meta['hv_shirt_size'] : '';
+
+                            foreach ($shirt_sizes as $size) {
+                                $selected = ($size === $selected_size) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($size) . '" ' . $selected . '>' . esc_html($size) . '</option>';
+                            }
+                            ?>
                         </select>
                     </div>
                 </div>
@@ -220,17 +308,21 @@ $user_data = [
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="profession" class="form-label">Profesión</label>
-                        <input type="text" class="form-control" id="profession" name="profession">
+                        <input type="text" class="form-control" id="profession" name="profession"
+                            value="<?php echo isset($user_meta['hv_profession']) ? esc_attr($user_meta['hv_profession']) : ''; ?>">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="medical_condition" class="form-label">Condición médica</label>
-                        <input type="text" class="form-control" id="medical_condition" name="medical_condition">
+                        <input type="text" class="form-control" id="medical_condition" name="medical_condition"
+                            value="<?php echo isset($user_meta['hv_medical_condition']) ? esc_attr($user_meta['hv_medical_condition']) : ''; ?>">
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="references" class="form-label">Referencias</label>
-                    <textarea class="form-control" id="references" name="references" rows="3"></textarea>
+                    <textarea class="form-control" id="references" name="references" rows="3"><?php
+                                                                                                echo isset($user_meta['hv_references']) ? esc_textarea($user_meta['hv_references']) : '';
+                                                                                                ?></textarea>
                 </div>
             </div>
         </div>
@@ -242,7 +334,11 @@ $user_data = [
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label for="identity_document" class="form-label">Subir documento de identidad (foto o escaneo) <span class="text-danger">*</span></label>
+                    <label for="identity_document" class="form-label">Subir documento de identidad (foto o escaneo)
+                        <?php if (!isset($user_meta['hv_identity_document']) || empty($user_meta['hv_identity_document'])): ?>
+                            <span class="text-danger">*</span>
+                        <?php endif; ?>
+                    </label>
                     <input type="file" class="form-control" id="identity_document" name="identity_document" accept="image/*,.pdf">
                     <div class="form-text">Formatos aceptados: JPG, PNG, PDF. Tamaño máximo: 5MB.</div>
                 </div>
@@ -254,10 +350,11 @@ $user_data = [
             <label class="form-check-label" for="terms_conditions">Acepto los términos y condiciones <span class="text-danger">*</span></label>
         </div>
 
+        <button type="submit" class="btn btn-primary" id="submit-btn">
+            <?php echo ($current_user->exists()) ? 'Actualizar Perfil' : 'Enviar Registro'; ?>
+        </button>
 
-        <button type="submit" class="btn btn-primary" id="submit-btn">Enviar Registro</button>
-
-        <!-- Mensaje de respuesta - MEJORADO -->
+        <!-- Mensaje de respuesta -->
         <div id="form-message" class="mt-3" style="display:none;">
             <div class="alert alert-dismissible fade show">
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -269,7 +366,7 @@ $user_data = [
 
 <script>
     jQuery(document).ready(function($) {
-        // Mostrar campo "Otro" en habilidades
+        // Mostrar campo "Otro" en habilidades si se selecciona
         $('input[name="skills"]').change(function() {
             if ($(this).val() === 'Otro') {
                 $('#skills_other_container').show();
@@ -280,7 +377,7 @@ $user_data = [
             }
         });
 
-        // Mostrar descripción de experiencia
+        // Mostrar campo de descripción de experiencia si se selecciona "Sí"
         $('input[name="has_experience"]').change(function() {
             if ($(this).val() === 'Sí' && $(this).is(':checked')) {
                 $('#experience_desc_container').show();
@@ -342,8 +439,11 @@ $user_data = [
 
                     if (response.success) {
                         showMessage(response.message, 'success');
-                        // Limpiar formulario después de éxito
-                        form[0].reset();
+
+                        // Solo resetear si no es usuario existente
+                        if (!<?php echo $current_user->exists() ? 'true' : 'false'; ?>) {
+                            form[0].reset();
+                        }
                     } else {
                         showMessage(response.message, 'danger');
                     }
