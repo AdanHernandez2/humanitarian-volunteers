@@ -3,8 +3,10 @@ jQuery(document).ready(function ($) {
   $('input[name="skills"]').change(function () {
     if ($(this).val() === "Otro") {
       $("#skills_other_container").show();
+      $("#skills_other").prop("required", true);
     } else {
       $("#skills_other_container").hide();
+      $("#skills_other").prop("required", false);
     }
   });
 
@@ -12,49 +14,56 @@ jQuery(document).ready(function ($) {
   $('input[name="has_experience"]').change(function () {
     if ($(this).val() === "Sí" && $(this).is(":checked")) {
       $("#experience_desc_container").show();
+      $("#experience_desc").prop("required", true);
     } else {
       $("#experience_desc_container").hide();
+      $("#experience_desc").prop("required", false);
     }
   });
 
-  // Validación adicional antes de enviar el formulario
+  // Validar formulario antes de enviar
   $("#volunteer-registration-form").on("submit", function (e) {
-    // Verificar que se haya seleccionado un área de interés
-    if (!$('input[name="skills"]:checked').length) {
-      alert("Por favor selecciona un área de interés");
+    // Validación básica
+    if (!$("#first_name").val() || !$("#last_name").val()) {
+      showMessage("Por favor ingresa tu nombre y apellido", "danger");
       return false;
     }
 
-    // Si se seleccionó "Otro", verificar que se haya especificado
-    if (
-      $('input[name="skills"]:checked').val() === "Otro" &&
-      !$("#skills_other").val()
-    ) {
-      alert("Por favor especifica tu área de interés");
+    if (!$("#email").val() || !isValidEmail($("#email").val())) {
+      showMessage("Por favor ingresa un correo electrónico válido", "danger");
       return false;
     }
 
-    // Verificar que se hayan respondido todas las preguntas de disponibilidad
-    if (
-      !$('input[name="weekend_availability"]:checked').length ||
-      !$('input[name="travel_availability"]:checked').length ||
-      !$('input[name="has_experience"]:checked').length
-    ) {
-      alert(
-        "Por favor responde todas las preguntas de disponibilidad y experiencia"
-      );
-      return false;
-    }
-
-    // Si se seleccionó "Sí" en experiencia, verificar que se haya descrito
-    if (
-      $('input[name="has_experience"]:checked').val() === "Sí" &&
-      !$("#experience_desc").val()
-    ) {
-      alert("Por favor describe brevemente tu experiencia");
+    if (!$("#phone").val()) {
+      showMessage("Por favor ingresa tu número de teléfono", "danger");
       return false;
     }
 
     return true;
   });
+
+  // Mostrar mensaje
+  function showMessage(message, type) {
+    var messageContainer = $("#form-message");
+    messageContainer
+      .removeClass("alert-success alert-danger")
+      .addClass("alert-" + type)
+      .find(".message-content")
+      .text(message);
+    messageContainer.show();
+
+    // Desplazar a mensaje
+    $("html, body").animate(
+      {
+        scrollTop: messageContainer.offset().top - 100,
+      },
+      500
+    );
+  }
+
+  // Validar email
+  function isValidEmail(email) {
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  }
 });

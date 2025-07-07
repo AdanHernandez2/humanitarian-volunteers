@@ -1,11 +1,14 @@
 <?php
-class Email_Manager {
-    public function __construct() {
+class Email_Manager
+{
+    public function __construct()
+    {
         add_action('volunteer_registered', [$this, 'send_registration_emails'], 10, 2);
         add_action('volunteer_verified', [$this, 'send_verification_email'], 10, 1);
     }
 
-    public function send_registration_emails($post_id, $data) {
+    public function send_registration_emails($post_id, $data)
+    {
         // Email a administrador
         $this->send_email(
             get_option('admin_email'),
@@ -23,15 +26,16 @@ class Email_Manager {
         );
     }
 
-    public function send_verification_email($post_id) {
+    public function send_verification_email($post_id)
+    {
         $volunteer = get_post($post_id);
         $email = carbon_get_post_meta($post_id, 'hv_email');
         $code = carbon_get_post_meta($post_id, 'hv_unique_code');
 
         // Generar PDFs
-        $pdf_generator = new PDF_Generator();
-        $pdf_content = $pdf_generator->generate_volunteer_card($post_id);
-        
+        // $pdf_generator = new PDF_Generator();
+        // $pdf_content = $pdf_generator->generate_volunteer_card($post_id);
+
         // Enviar email con adjuntos
         $this->send_email(
             $email,
@@ -40,7 +44,7 @@ class Email_Manager {
             ['code' => $code],
             [
                 [
-                    'content' => $pdf_content,
+                    // 'content' => $pdf_content,
                     'filename' => 'credencial-voluntario.pdf',
                     'type' => 'application/pdf'
                 ]
@@ -48,7 +52,8 @@ class Email_Manager {
         );
     }
 
-    private function send_email($to, $subject, $template, $data, $attachments = []) {
+    private function send_email($to, $subject, $template, $data, $attachments = [])
+    {
         // Implementación con PHPMailer
         // (Código completo requiere configuración SMTP)
     }

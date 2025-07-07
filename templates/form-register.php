@@ -1,9 +1,16 @@
 <?php
-// Verificar si WordPress está cargado
-if (!defined('ABSPATH')) exit;
+// Precargar datos del usuario si está logueado
+$current_user = wp_get_current_user();
+$user_data = [
+    'full_name' => $current_user->exists() ? $current_user->display_name : '',
+    'email' => $current_user->exists() ? $current_user->user_email : '',
+    'first_name' => $current_user->exists() ? $current_user->first_name : '',
+    'last_name' => $current_user->exists() ? $current_user->last_name : ''
+];
 ?>
+
 <div class="container hv-form-container">
-    <form id="volunteer-registration-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+    <form id="volunteer-registration-form" method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="volunteer_submit">
         <?php wp_nonce_field('volunteer_form_action', 'volunteer_nonce'); ?>
 
@@ -15,20 +22,29 @@ if (!defined('ABSPATH')) exit;
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="full_name" class="form-label">Nombre completo <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        <label for="first_name" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="first_name" name="first_name"
+                            value="<?php echo esc_attr($user_data['first_name']); ?>" required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="id_number" class="form-label">Cédula</label>
-                        <input type="text" class="form-control" id="id_number" name="id_number">
+                        <label for="last_name" class="form-label">Apellido <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="last_name" name="last_name"
+                            value="<?php echo esc_attr($user_data['last_name']); ?>" required>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
+                        <label for="id_number" class="form-label">Cédula</label>
+                        <input type="text" class="form-control" id="id_number" name="id_number">
+                    </div>
+                    <div class="col-md-6 mb-3">
                         <label for="birth_date" class="form-label">Fecha de nacimiento <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="birth_date" name="birth_date" required>
                     </div>
+                </div>
+
+                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="province" class="form-label">Provincia de residencia <span class="text-danger">*</span></label>
                         <select class="form-select" id="province" name="province" required>
@@ -42,17 +58,16 @@ if (!defined('ABSPATH')) exit;
                             <option value="Limón">Limón</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="phone" class="form-label">Teléfono / WhatsApp <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="phone" name="phone" required>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="email" name="email"
+                        value="<?php echo esc_attr($user_data['email']); ?>" required>
                 </div>
             </div>
         </div>
@@ -239,28 +254,162 @@ if (!defined('ABSPATH')) exit;
             <label class="form-check-label" for="terms_conditions">Acepto los términos y condiciones <span class="text-danger">*</span></label>
         </div>
 
-        <button type="submit" class="btn btn-primary">Enviar Registro</button>
+
+        <button type="submit" class="btn btn-primary" id="submit-btn">Enviar Registro</button>
+
+        <!-- Mensaje de respuesta - MEJORADO -->
+        <div id="form-message" class="mt-3" style="display:none;">
+            <div class="alert alert-dismissible fade show">
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <span class="message-content"></span>
+            </div>
+        </div>
     </form>
 </div>
 
 <script>
     jQuery(document).ready(function($) {
-        // Mostrar campo "Otro" en habilidades si se selecciona
+        // Mostrar campo "Otro" en habilidades
         $('input[name="skills"]').change(function() {
             if ($(this).val() === 'Otro') {
                 $('#skills_other_container').show();
+                $('#skills_other').prop('required', true);
             } else {
                 $('#skills_other_container').hide();
+                $('#skills_other').prop('required', false);
             }
         });
 
-        // Mostrar campo de descripción de experiencia si se selecciona "Sí"
+        // Mostrar descripción de experiencia
         $('input[name="has_experience"]').change(function() {
             if ($(this).val() === 'Sí' && $(this).is(':checked')) {
                 $('#experience_desc_container').show();
+                $('#experience_desc').prop('required', true);
             } else {
                 $('#experience_desc_container').hide();
+                $('#experience_desc').prop('required', false);
+            }
+        });
+
+        // Manejar envío del formulario
+        $('#volunteer-registration-form').on('submit', function(e) {
+            e.preventDefault();
+
+            var form = $(this);
+            var formData = new FormData(this);
+            var messageContainer = $('#form-message');
+            var alertBox = messageContainer.find('.alert');
+            var messageContent = messageContainer.find('.message-content');
+            var submitBtn = $('#submit-btn');
+
+            // Resetear mensaje
+            messageContainer.hide();
+            alertBox.removeClass('alert-success alert-danger');
+            messageContent.text('');
+
+            // Mostrar estado de envío
+            messageContainer.show();
+            alertBox.addClass('alert-info');
+            messageContent.text('Enviando formulario...');
+            submitBtn.prop('disabled', true);
+
+            // Scroll al mensaje
+            messageContainer[0].scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Timeout para prevenir bloqueos
+            var timeout = setTimeout(function() {
+                if (!form.data('completed')) {
+                    showMessage('Tiempo de espera agotado. Intenta nuevamente.', 'danger');
+                    submitBtn.prop('disabled', false);
+                }
+            }, 15000);
+
+            form.data('completed', false);
+
+            $.ajax({
+                url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(response) {
+                    clearTimeout(timeout);
+                    form.data('completed', true);
+
+                    if (response.success) {
+                        showMessage(response.message, 'success');
+                        // Limpiar formulario después de éxito
+                        form[0].reset();
+                    } else {
+                        showMessage(response.message, 'danger');
+                    }
+                },
+                error: function(xhr) {
+                    clearTimeout(timeout);
+                    form.data('completed', true);
+
+                    var errorMessage = 'Error en el servidor. Intenta nuevamente.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        try {
+                            var json = JSON.parse(xhr.responseText);
+                            if (json.message) errorMessage = json.message;
+                        } catch (e) {}
+                    }
+
+                    showMessage(errorMessage, 'danger');
+                },
+                complete: function() {
+                    submitBtn.prop('disabled', false);
+                }
+            });
+
+            function showMessage(message, type) {
+                alertBox.removeClass('alert-info alert-success alert-danger')
+                    .addClass('alert-' + type)
+                    .find('.message-content').text(message);
+
+                // Scroll al mensaje después de actualizar
+                setTimeout(function() {
+                    messageContainer[0].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }, 100);
             }
         });
     });
 </script>
+
+<?php if (is_user_logged_in()): ?>
+    <script>
+        jQuery(document).ready(function($) {
+            // Verificar si el usuario ya tiene documento subido
+            $.ajax({
+                url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                type: 'POST',
+                data: {
+                    action: 'check_user_document',
+                    user_id: '<?php echo get_current_user_id(); ?>',
+                    security: '<?php echo wp_create_nonce('hv_profile_nonce'); ?>'
+                },
+                success: function(response) {
+                    if (response.success && response.data.has_document) {
+                        $('#identity_document').closest('.mb-3').after(
+                            '<div class="alert alert-info mt-3">Ya tienes un documento subido. Sube uno nuevo solo si quieres actualizarlo.</div>'
+                        );
+                    }
+                },
+                error: function() {
+                    console.log('Error al verificar documento existente');
+                }
+            });
+        });
+    </script>
+<?php endif; ?>

@@ -2,7 +2,7 @@
 /*
 Plugin Name: Humanitarian Volunteers
 Description: Sistema de gestión de voluntarios humanitarios
-Version: 2.0
+Version: 2.1
 Author: Humanitarios
 */
 
@@ -37,16 +37,6 @@ foreach ($includes as $file) {
     }
 }
 
-// Registrar shortcode
-add_shortcode('volunteer_registration_form', 'render_volunteer_form');
-function render_volunteer_form()
-{
-    ob_start();
-    wp_nonce_field('volunteer_form_action', 'volunteer_nonce');
-    include HV_PLUGIN_PATH . 'templates/form-register.php';
-    return ob_get_clean();
-}
-
 // Inicializar clases
 add_action('init', function () {
     new Volunteer_Form_Handler();  // Manejo de formularios
@@ -59,28 +49,126 @@ add_action('init', function () {
     }
 });
 
-// Cargar estilos y scripts de administración
+// Cargar estilos y scripts de administración (VERSIÓN CORREGIDA)
 add_action('admin_enqueue_scripts', function ($hook) {
-    // Estilos para la página de voluntarios
-    if (
-        'toplevel_page_volunteers' === $hook ||
-        (isset($_GET['page']) && 'volunteer_profile' === $_GET['page'])
-    ) {
+    // Verificar páginas de voluntarios
+    $is_volunteers_page = ('toplevel_page_volunteers' === $hook);
+    $is_profile_page = (isset($_GET['page']) && 'volunteer_profile' === $_GET['page']);
 
-        // Bootstrap CSS
-        wp_enqueue_style('hv-bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css');
+    if ($is_volunteers_page || $is_profile_page) {
+        // Bootstrap CSS (solo si no está cargado)
+        if (!wp_style_is('bootstrap')) {
+            wp_enqueue_style(
+                'hv-bootstrap',
+                'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+                [],
+                '5.3.0'
+            );
+        }
 
-        // Estilos personalizados
-        wp_enqueue_style('hv-admin-styles', HV_PLUGIN_URL . 'assets/css/admin-volunteers.css');
+        // ESTILOS: Usar plugin_dir_path() para obtener ruta física
+        $admin_css = plugin_dir_path(__FILE__) . 'assets/css/admin-volunteers.css';
+        if (file_exists($admin_css)) {
+            wp_enqueue_style(
+                'hv-admin-styles',
+                plugin_dir_url(__FILE__) . 'assets/css/admin-volunteers.css',
+                [],
+                filemtime($admin_css) // Versionado automático
+            );
+        }
 
-        // Scripts solo para la página principal
-        if ('toplevel_page_volunteers' === $hook) {
-            wp_enqueue_script('hv-admin-scripts', HV_PLUGIN_URL . 'assets/js/admin-volunteers.js', ['jquery'], null, true);
+        // Scripts solo para página principal
+        if ($is_volunteers_page) {
+            // SCRIPTS: Usar plugin_dir_path() para obtener ruta física
+            $admin_js = plugin_dir_path(__FILE__) . 'assets/js/admin-volunteers.js';
+            if (file_exists($admin_js)) {
+                wp_enqueue_script(
+                    'hv-admin-scripts',
+                    plugin_dir_url(__FILE__) . 'assets/js/admin-volunteers.js',
+                    ['jquery'],
+                    filemtime($admin_js),
+                    true
+                );
 
-            // Datos para AJAX
-            wp_localize_script('hv-admin-scripts', 'hv_admin', [
+                // Datos para AJAX
+                wp_localize_script('hv-admin-scripts', 'hv_admin', [
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('hv_admin_nonce')
+                ]);
+            }
+        }
+    }
+});
+
+// Cargar estilos y scripts en el front-end
+add_action('wp_enqueue_scripts', function () {
+    // Registrar Bootstrap (pero no cargarlo aún)
+    wp_register_style(
+        'hv-bootstrap-front',
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
+        [],
+        '5.3.0'
+    );
+
+    // Registrar estilos personalizados
+    $front_css = plugin_dir_path(__FILE__) . 'assets/css/volunteer-styles.css';
+    if (file_exists($front_css)) {
+        wp_register_style(
+            'hv-frontend-styles',
+            plugin_dir_url(__FILE__) . 'assets/css/volunteer-styles.css',
+            [],
+            filemtime($front_css)
+        );
+    }
+
+    // Registrar scripts personalizados
+    $front_js = plugin_dir_path(__FILE__) . 'assets/js/volunteer-scripts.js';
+    if (file_exists($front_js)) {
+        wp_register_script(
+            'hv-frontend-scripts',
+            plugin_dir_url(__FILE__) . 'assets/js/volunteer-scripts.js',
+            ['jquery'],
+            filemtime($front_js),
+            true
+        );
+    }
+});
+
+// Modificar el shortcode para activar los recursos
+add_shortcode('volunteer_registration_form', function () {
+    // Indicar que se deben cargar los recursos
+    global $hv_load_resources;
+    $hv_load_resources = true;
+
+    ob_start();
+    wp_nonce_field('volunteer_form_action', 'volunteer_nonce');
+    include plugin_dir_path(__FILE__) . 'templates/form-register.php';
+    return ob_get_clean();
+});
+
+// Cargar los recursos solo cuando el shortcode esté presente
+add_action('wp_footer', function () {
+    global $hv_load_resources;
+
+    if (!empty($hv_load_resources)) {
+        // Cargar Bootstrap si no está cargado
+        if (!wp_style_is('bootstrap')) {
+            wp_enqueue_style('hv-bootstrap-front');
+        }
+
+        // Cargar estilos personalizados
+        if (wp_style_is('hv-frontend-styles', 'registered')) {
+            wp_enqueue_style('hv-frontend-styles');
+        }
+
+        // Cargar scripts personalizados
+        if (wp_script_is('hv-frontend-scripts', 'registered')) {
+            wp_enqueue_script('hv-frontend-scripts');
+
+            // Localizar script solo si se carga
+            wp_localize_script('hv-frontend-scripts', 'hv_frontend', [
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('hv_admin_nonce')
+                'nonce'    => wp_create_nonce('hv_frontend_nonce')
             ]);
         }
     }

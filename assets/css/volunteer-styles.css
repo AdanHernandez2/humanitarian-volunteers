@@ -22,7 +22,7 @@
 }
 
 .hv-admin-volunteers .table th {
-  background-color: #343a40;
+  background-color: #ce1126;
   color: white;
   position: sticky;
   top: 0;
@@ -76,11 +76,6 @@
 }
 
 /* Formulario de voluntarios */
-.hv-form-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
 
 .hv-form-container .card {
   margin-bottom: 20px;
@@ -90,8 +85,30 @@
 
 .hv-form-container .card-header {
   padding: 0.75rem 1.25rem;
-  background-color: #f8f9fa;
+  background-color: #002d62 !important;
+
   border-bottom: 1px solid #dee2e6;
+}
+.hv-form-container .card-header h3 {
+  color: #fff;
+}
+.hv-form-container h2,
+.hv-form-container h3,
+.hv-form-container span,
+.hv-form-container a,
+.hv-form-container strong {
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
+}
+.hv-form-container p {
+  font-family: Poppins, sans-serif;
+}
+.hv-form-container h2 {
+  font-size: 36px;
+}
+
+.hv-form-container h3 {
+  font-size: 26px;
 }
 
 .hv-form-container .card-body {
@@ -111,8 +128,49 @@
 }
 
 .hv-form-container .btn-primary {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-  padding: 0.5rem 1.5rem;
-  font-size: 1.1rem;
+  background-color: #ce1126;
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 15px 10px 15px;
+}
+
+.bg-primary {
+  background-color: #ce1126 !important;
+}
+
+/* Mensajes de formulario - MEJORADO */
+#form-message {
+  margin-top: 20px;
+}
+
+#form-message .alert {
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 0;
+}
+
+#form-message .alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+#form-message .alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+#form-message .alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Botón deshabilitado */
+#submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

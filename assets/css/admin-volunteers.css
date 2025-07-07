@@ -20,6 +20,8 @@
   color: white;
   position: sticky;
   top: 0;
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .hv-admin-volunteers .table tr:nth-child(even) {
@@ -35,10 +37,56 @@
   border-radius: 12px;
   font-weight: normal;
 }
-
+.hv-admin-volunteers .btn {
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+}
+.hv-admin-volunteers .form-select {
+  padding: 7px;
+  border-radius: 10px;
+}
+.hv-admin-volunteers .btn-primary {
+  background-color: #002d62;
+}
 .hv-admin-volunteers .btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
+  font-size: 15px;
   line-height: 1.5;
-  border-radius: 0.2rem;
+}
+
+/** 
+  Perfil de voluntario
+**/
+.volunteer-profile .card-header {
+  background-color: #002d62 !important;
+}
+.volunteer-profile h1,
+.volunteer-profile h2,
+.volunteer-profile h3 {
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
+}
+.volunteer-profile p {
+  font-size: 16px;
+  font-family: Poppins, sans-serif;
+}
+.volunteer-profile .btn-primary {
+  background-color: #ce1126;
+}
+.volunteer-profile .btn-primary,
+.volunteer-profile .btn-secondary {
+  font-family: Montserrat, sans-serif;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 15px 10px 15px;
+}
+
+.container-cars-volunteer_profiler-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 15px;
+  padding: 10px;
 }
