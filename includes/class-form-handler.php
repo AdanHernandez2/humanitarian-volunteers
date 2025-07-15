@@ -1,6 +1,12 @@
 <?php
 class Volunteer_Form_Handler
 {
+
+    private function validate_availability_hours($hours)
+    {
+        $allowed_hours = ['2', '4', '6', '8', '12', '24'];
+        return in_array($hours, $allowed_hours, true);
+    }
     public function __construct()
     {
         add_action('wp_ajax_volunteer_submit', [$this, 'handle_submission']);
@@ -24,6 +30,16 @@ class Volunteer_Form_Handler
                 throw new Exception('Error de seguridad. Recarga la página');
             }
 
+            // Verificar que al menos un área de interés esté seleccionada
+            if (empty($_POST['interest_areas'])) {
+                throw new Exception('Debes seleccionar al menos un área de interés');
+            }
+
+            // Verificar que al menos un día de disponibilidad esté seleccionado
+            if (empty($_POST['availability_days'])) {
+                throw new Exception('Debes seleccionar al menos un día de disponibilidad');
+            }
+
             // Validar campos requeridos
             $required_fields = [
                 'first_name',
@@ -32,10 +48,16 @@ class Volunteer_Form_Handler
                 'phone',
                 'birth_date',
                 'province',
-                'skills',
+                'address', // Nuevo campo requerido
+                'education_level', // Nuevo campo requerido
                 'weekend_availability',
                 'travel_availability',
-                'has_experience'
+                'has_experience',
+                'reference1_name', // Nuevo campo requerido
+                'reference1_phone', // Nuevo campo requerido
+                'reference2_name', // Nuevo campo requerido
+                'reference2_phone', // Nuevo campo requerido
+                'terms_conditions'
             ];
 
             $missing_fields = [];
@@ -74,11 +96,26 @@ class Volunteer_Form_Handler
                 'shirt_size' => sanitize_text_field($_POST['shirt_size'] ?? ''),
                 'profession' => sanitize_text_field($_POST['profession'] ?? ''),
                 'medical_condition' => sanitize_text_field($_POST['medical_condition'] ?? ''),
+                'physical_limitations' => sanitize_textarea_field($_POST['physical_limitations'] ?? ''), // Nuevo campo
                 'references' => sanitize_textarea_field($_POST['references'] ?? ''),
+                'reference1_name' => sanitize_text_field($_POST['reference1_name']), // Nuevo campo
+                'reference1_phone' => sanitize_text_field($_POST['reference1_phone']), // Nuevo campo
+                'reference2_name' => sanitize_text_field($_POST['reference2_name']), // Nuevo campo
+                'reference2_phone' => sanitize_text_field($_POST['reference2_phone']), // Nuevo campo
+                'availability_hours' => sanitize_text_field($_POST['availability_hours']), // Nuevo campo
+                'international_availability' => sanitize_text_field($_POST['international_availability']),
             ];
+
+            // Manejar campos de arrays (selección múltiple)
+            $interest_areas = isset($_POST['interest_areas']) ? array_map('sanitize_text_field', $_POST['interest_areas']) : [];
+            $availability_days = isset($_POST['availability_days']) ? array_map('sanitize_text_field', $_POST['availability_days']) : [];
 
             if (!is_email($data['email'])) {
                 throw new Exception('Email inválido');
+            }
+
+            if (!$this->validate_availability_hours($data['availability_hours'])) {
+                throw new Exception('Horas de disponibilidad no válidas');
             }
 
             // 1. Verificar si el usuario ya existe
@@ -192,16 +229,72 @@ class Volunteer_Form_Handler
                 }
             }
 
+            // Manejar subida de firma
+            $signature_id = 0;
+            $current_signature = get_user_meta($user_id, 'hv_signature', true);
+
+            if (!empty($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK) {
+                $allowed_types = ['image/jpeg', 'image/png'];
+                $file_type = $_FILES['signature']['type'];
+
+                if (!in_array($file_type, $allowed_types)) {
+                    throw new Exception('Formato de firma no permitido (solo JPG, PNG)');
+                }
+
+                $max_size = 2 * 1024 * 1024; // 2MB
+                if ($_FILES['signature']['size'] > $max_size) {
+                    throw new Exception('Archivo de firma demasiado grande (máx 2MB)');
+                }
+
+                $upload_overrides = ['test_form' => false];
+                $upload = wp_handle_upload($_FILES['signature'], $upload_overrides);
+
+                if ($upload && !isset($upload['error'])) {
+                    $attachment = [
+                        'post_mime_type' => $upload['type'],
+                        'post_title' => sanitize_file_name($_FILES['signature']['name']),
+                        'post_content' => '',
+                        'post_status' => 'private'
+                    ];
+
+                    $signature_id = wp_insert_attachment($attachment, $upload['file']);
+
+                    if (is_wp_error($signature_id)) {
+                        throw new Exception('Error al guardar firma');
+                    }
+
+                    require_once ABSPATH . 'wp-admin/includes/image.php';
+                    $attach_data = wp_generate_attachment_metadata($signature_id, $upload['file']);
+                    wp_update_attachment_metadata($signature_id, $attach_data);
+
+                    // Eliminar firma anterior si existe
+                    if ($current_signature && is_numeric($current_signature)) {
+                        wp_delete_attachment($current_signature, true);
+                    }
+                } else {
+                    throw new Exception('Error al subir firma: ' . ($upload['error'] ?? ''));
+                }
+            } elseif (!$is_update) {
+                // Para nuevos registros, firma es obligatoria
+                throw new Exception('Debes subir tu firma');
+            }
+
+            if ($signature_id) {
+                update_user_meta($user_id, 'hv_signature', $signature_id);
+            }
+
             // 3. Guardar metadatos
             $meta_map = [
                 'id_number' => 'hv_id_number',
                 'birth_date' => 'hv_birth_date',
                 'province' => 'hv_province',
                 'phone' => 'hv_phone',
-                'skills' => 'hv_skills',
-                'skills_other' => 'hv_skills_other',
+                'address' => 'hv_address', // Nuevo campo
+                'marital_status' => 'hv_marital_status', // Nuevo campo
+                'education_level' => 'hv_education_level', // Nuevo campo
                 'weekend_availability' => 'hv_weekend_availability',
                 'travel_availability' => 'hv_travel_availability',
+                'international_availability' => 'hv_international_availability', // Nuevo campo
                 'has_experience' => 'hv_has_experience',
                 'experience_desc' => 'hv_experience_desc',
                 'nationality' => 'hv_nationality',
@@ -210,8 +303,16 @@ class Volunteer_Form_Handler
                 'shirt_size' => 'hv_shirt_size',
                 'profession' => 'hv_profession',
                 'medical_condition' => 'hv_medical_condition',
+                'physical_limitations' => 'hv_physical_limitations', // Nuevo campo
                 'references' => 'hv_references',
+                'reference1_name' => 'hv_reference1_name', // Nuevo campo
+                'reference1_phone' => 'hv_reference1_phone', // Nuevo campo
+                'reference2_name' => 'hv_reference2_name', // Nuevo campo
+                'reference2_phone' => 'hv_reference2_phone', // Nuevo campo
+                'availability_hours' => 'hv_availability_hours', // Nuevo campo
                 'identity_document' => 'hv_identity_document',
+                'signature' => 'hv_signature' // Nuevo campo
+
             ];
 
             foreach ($meta_map as $field => $meta_key) {
@@ -220,16 +321,35 @@ class Volunteer_Form_Handler
                 }
             }
 
+            // Guardar campos de arrays serializados
+            update_user_meta($user_id, 'hv_interest_areas', maybe_serialize($interest_areas));
+            update_user_meta($user_id, 'hv_availability_days', maybe_serialize($availability_days));
             // Guardar documento si se subió uno nuevo
             if ($document_id) {
                 update_user_meta($user_id, 'hv_identity_document', $document_id);
             }
 
-            // 4. Disparar acciones según tipo de operación
+            // 4. Disparar acciones según tipo de operación y estado de verificación
+            $is_verified = get_user_meta($user_id, '_is_verified', true);
+
             if ($is_update) {
-                do_action('volunteer_updated', $user_id, $data);
-                $response['message'] = '¡Perfil actualizado correctamente!';
+                if ($is_verified === 'no') {
+                    // Usuario no verificado enviando formulario (tratar como nuevo registro)
+                    update_user_meta($user_id, 'hv_status', 'pending');
+                    do_action('volunteer_registered', $user_id, $data);
+                    $response['message'] = '¡Registro exitoso! Tu solicitud ha sido recibida.';
+                } else {
+                    // Usuario verificado actualizando su perfil
+                    do_action('volunteer_updated', $user_id, $data);
+                    $response['message'] = '¡Perfil actualizado correctamente!';
+                }
             } else {
+                // Nuevo registro
+                update_user_meta($user_id, '_user_type', 'employers');
+                update_user_meta($user_id, 'hv_status', 'pending');
+                update_user_meta($user_id, '_is_verified', 'no');
+                update_user_meta($user_id, 'identity_verified', '0');
+
                 do_action('volunteer_registered', $user_id, $data);
                 $response['message'] = '¡Registro exitoso! Tu solicitud ha sido recibida.';
             }

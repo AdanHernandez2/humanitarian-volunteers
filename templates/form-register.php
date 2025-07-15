@@ -38,7 +38,21 @@ if ($current_user->exists()) {
         'hv_shirt_size',
         'hv_profession',
         'hv_medical_condition',
-        'hv_references'
+        'hv_references',
+        'hv_marital_status',
+        'hv_address',
+        'hv_education_level',
+        'hv_interest_areas',
+        'hv_availability_days',
+        'hv_availability_hours',
+        'hv_international_availability',
+        'hv_physical_limitations',
+        'hv_reference1_name',
+        'hv_reference1_phone',
+        'hv_reference2_name',
+        'hv_reference2_phone',
+        'hv_signature',
+        'hv_accept_terms'
     ];
 
     foreach ($meta_keys as $key) {
@@ -87,13 +101,97 @@ if ($current_user->exists()) {
                     </div>
                 </div>
 
+
+                <div class="mb-3">
+                    <label for="education_level" class="form-label">Nivel académico alcanzado <span class="text-danger">*</span></label>
+                    <select class="form-select" id="education_level" name="education_level" required>
+                        <option value="">Seleccionar</option>
+                        <?php
+                        $education_levels = [
+                            'Primaria completada',
+                            'Primaria no completada',
+                            'Secundaria completada',
+                            'Secundaria no completada',
+                            'Licenciatura',
+                            'Maestría',
+                            'Doctorado'
+                        ];
+                        $selected_level = isset($user_meta['hv_education_level']) ? $user_meta['hv_education_level'] : '';
+
+                        foreach ($education_levels as $level) {
+                            $selected = ($level === $selected_level) ? 'selected' : '';
+                            echo '<option value="' . esc_attr($level) . '" ' . $selected . '>' . esc_html($level) . '</option>';
+                        }
+                        ?>
+                    </select>
+                </div>
+
+
+                <!-- Dentro de la sección "Información Personal" -->
                 <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="marital_status" class="form-label">Estado civil</label>
+                        <select class="form-select" id="marital_status" name="marital_status">
+                            <option value="">Seleccionar</option>
+                            <?php
+                            $marital_statuses = ['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Unión libre'];
+                            $selected_status = isset($user_meta['hv_marital_status']) ? $user_meta['hv_marital_status'] : '';
+
+                            foreach ($marital_statuses as $status) {
+                                $selected = ($status === $selected_status) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($status) . '" ' . $selected . '>' . esc_html($status) . '</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="address" class="form-label">Dirección <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="address" name="address"
+                            value="<?php echo isset($user_meta['hv_address']) ? esc_attr($user_meta['hv_address']) : ''; ?>" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Reemplaza el select de provincias existente con este: -->
                     <div class="col-md-6 mb-3">
                         <label for="province" class="form-label">Provincia de residencia <span class="text-danger">*</span></label>
                         <select class="form-select" id="province" name="province" required>
                             <option value="">Seleccionar</option>
                             <?php
-                            $provinces = ['San José', 'Alajuela', 'Cartago', 'Heredia', 'Guanacaste', 'Puntarenas', 'Limón'];
+                            $provinces = [
+                                'Distrito Nacional',
+                                'Azua',
+                                'Bahoruco',
+                                'Barahona',
+                                'Dajabón',
+                                'Duarte',
+                                'Elías Piña',
+                                'El Seibo',
+                                'Espaillat',
+                                'Hato Mayor',
+                                'Hermanas Mirabal',
+                                'Independencia',
+                                'La Altagracia',
+                                'La Romana',
+                                'La Vega',
+                                'María Trinidad Sánchez',
+                                'Monseñor Nouel',
+                                'Monte Cristi',
+                                'Monte Plata',
+                                'Pedernales',
+                                'Peravia',
+                                'Puerto Plata',
+                                'Samaná',
+                                'San Cristóbal',
+                                'San José de Ocoa',
+                                'San Juan',
+                                'San Pedro de Macorís',
+                                'Sánchez Ramírez',
+                                'Santiago',
+                                'Santiago Rodríguez',
+                                'Santo Domingo',
+                                'Valverde'
+                            ];
                             $selected_province = isset($user_meta['hv_province']) ? $user_meta['hv_province'] : '';
 
                             foreach ($provinces as $province) {
@@ -125,38 +223,45 @@ if ($current_user->exists()) {
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <label class="form-label">Selecciona tu área de interés <span class="text-danger">*</span></label>
+                    <label class="form-label">¿En qué áreas te gustaría colaborar? (Marcar con una X) <span class="text-danger">*</span></label>
                     <?php
-                    $skills_options = [
-                        'Emergencias y desastres',
-                        'Logística y distribución',
-                        'Salud (médico, enfermería, psicología)',
-                        'Tecnología / Soporte',
-                        'Otro'
+                    $interest_areas = [
+                        'Respuesta en emergencias y desastres',
+                        'Reconstrucción y desarrollo comunitario',
+                        'Captación y distribución de donaciones',
+                        'Búsqueda y rescate',
+                        'Asistencia médica',
+                        'Asistencia psicológica',
+                        'Búsqueda de personas, objetos y animales desaparecidos',
+                        'Promoción en redes sociales',
+                        'Área legal',
+                        'Manejo de fondos',
+                        'Logística',
+                        'Carga y descarga de ayuda humanitaria',
+                        'Captación de fondos',
+                        'Captación de voluntarios',
+                        'Apoyo tecnológico',
+                        'Transportación (chofer)'
                     ];
 
-                    $selected_skill = isset($user_meta['hv_skills']) ? $user_meta['hv_skills'] : '';
+                    $selected_areas = isset($user_meta['hv_interest_areas']) ? maybe_unserialize($user_meta['hv_interest_areas']) : [];
                     ?>
 
-                    <?php foreach ($skills_options as $index => $skill): ?>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="skills"
-                                id="skills<?php echo $index + 1; ?>"
-                                value="<?php echo esc_attr($skill); ?>"
-                                <?php if ($skill === $selected_skill) echo 'checked'; ?>
-                                required>
-                            <label class="form-check-label" for="skills<?php echo $index + 1; ?>">
-                                <?php echo esc_html($skill); ?>
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="mb-3" id="skills_other_container"
-                    style="<?php echo ($selected_skill === 'Otro') ? '' : 'display:none;'; ?>">
-                    <label for="skills_other" class="form-label">Especificar otro</label>
-                    <input type="text" class="form-control" id="skills_other" name="skills_other"
-                        value="<?php echo isset($user_meta['hv_skills_other']) ? esc_attr($user_meta['hv_skills_other']) : ''; ?>"
-                        <?php echo ($selected_skill === 'Otro') ? 'required' : ''; ?>>
+                    <div class="row">
+                        <?php foreach ($interest_areas as $index => $area): ?>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input x-checkbox" type="checkbox" name="interest_areas[]"
+                                        id="area_<?php echo $index; ?>"
+                                        value="<?php echo esc_attr($area); ?>"
+                                        <?php if (is_array($selected_areas) && in_array($area, $selected_areas)) echo 'checked'; ?>>
+                                    <label class="form-check-label" for="area_<?php echo $index; ?>">
+                                        <?php echo esc_html($area); ?>
+                                    </label>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -168,7 +273,71 @@ if ($current_user->exists()) {
             </div>
             <div class="card-body">
                 <div class="row">
+                    <!-- Días de disponibilidad -->
                     <div class="col-md-6 mb-3">
+                        <label for="availability_days" class="form-label">Días de disponibilidad <span class="text-danger">*</span></label>
+                        <?php
+                        $days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                        $selected_days = isset($user_meta['hv_availability_days']) ? maybe_unserialize($user_meta['hv_availability_days']) : [];
+                        ?>
+                        <div class="row">
+                            <?php foreach ($days as $index => $day): ?>
+                                <div class="col-6 col-sm-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="availability_days[]"
+                                            id="day_<?php echo $index; ?>"
+                                            value="<?php echo esc_attr($day); ?>"
+                                            <?php if (is_array($selected_days) && in_array($day, $selected_days)) echo 'checked'; ?>>
+                                        <label class="form-check-label" for="day_<?php echo $index; ?>">
+                                            <?php echo esc_html($day); ?>
+                                        </label>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <small class="form-text text-muted">Selecciona todos los días en los que puedes colaborar.</small>
+                    </div>
+
+                    <!-- Horas disponibles por día -->
+                    <div class="col-md-6 mb-3">
+                        <label for="availability_hours" class="form-label">Horas disponibles por día <span class="text-danger">*</span></label>
+                        <select class="form-select" id="availability_hours" name="availability_hours" required>
+                            <option value="">Seleccionar</option>
+                            <?php
+                            $hours = ['2', '4', '6', '8', '12', '24'];
+                            $selected_hours = isset($user_meta['hv_availability_hours']) ? $user_meta['hv_availability_hours'] : '';
+                            foreach ($hours as $hour) {
+                                $selected = ($hour === $selected_hours) ? 'selected' : '';
+                                echo '<option value="' . esc_attr($hour) . '" ' . $selected . '>' . esc_html($hour) . ' horas</option>';
+                            }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Disponibilidad internacional -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">¿Disponibilidad para salir del país en misiones? <span class="text-danger">*</span></label>
+                        <?php
+                        $international_availability = isset($user_meta['hv_international_availability']) ? $user_meta['hv_international_availability'] : '';
+                        ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="international_availability"
+                                id="international_yes" value="Sí"
+                                <?php if ($international_availability === 'Sí') echo 'checked'; ?> required>
+                            <label class="form-check-label" for="international_yes">Sí</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="international_availability"
+                                id="international_no" value="No"
+                                <?php if ($international_availability === 'No') echo 'checked'; ?> required>
+                            <label class="form-check-label" for="international_no">No</label>
+                        </div>
+                    </div>
+
+                    <!-- Disponibilidad fines de semana -->
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">¿Disponible fines de semana? <span class="text-danger">*</span></label>
                         <?php
                         $weekend_availability = isset($user_meta['hv_weekend_availability']) ? $user_meta['hv_weekend_availability'] : '';
@@ -186,7 +355,9 @@ if ($current_user->exists()) {
                             <label class="form-check-label" for="weekend_no">No</label>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+
+                    <!-- Puede viajar al interior -->
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">¿Puede viajar al interior? <span class="text-danger">*</span></label>
                         <?php
                         $travel_availability = isset($user_meta['hv_travel_availability']) ? $user_meta['hv_travel_availability'] : '';
@@ -289,6 +460,12 @@ if ($current_user->exists()) {
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
+                        <label for="physical_limitations" class="form-label">¿Tienes algún tipo de limitación física o de salud que debamos considerar?</label>
+                        <textarea class="form-control" id="physical_limitations" name="physical_limitations" rows="2"><?php
+                                                                                                                        echo isset($user_meta['hv_physical_limitations']) ? esc_textarea($user_meta['hv_physical_limitations']) : '';
+                                                                                                                        ?></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
                         <label for="shirt_size" class="form-label">Talla de camiseta</label>
                         <select class="form-select" id="shirt_size" name="shirt_size">
                             <option value="">Seleccionar</option>
@@ -317,15 +494,42 @@ if ($current_user->exists()) {
                             value="<?php echo isset($user_meta['hv_medical_condition']) ? esc_attr($user_meta['hv_medical_condition']) : ''; ?>">
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="mb-3">
-                    <label for="references" class="form-label">Referencias</label>
-                    <textarea class="form-control" id="references" name="references" rows="3"><?php
-                                                                                                echo isset($user_meta['hv_references']) ? esc_textarea($user_meta['hv_references']) : '';
-                                                                                                ?></textarea>
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">Referencias Personales</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="reference1_name" class="form-label">Nombre Referencia 1 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="reference1_name" name="reference1_name"
+                            value="<?php echo isset($user_meta['hv_reference1_name']) ? esc_attr($user_meta['hv_reference1_name']) : ''; ?>" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="reference1_phone" class="form-label">Teléfono Referencia 1 <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="reference1_phone" name="reference1_phone"
+                            value="<?php echo isset($user_meta['hv_reference1_phone']) ? esc_attr($user_meta['hv_reference1_phone']) : ''; ?>" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="reference2_name" class="form-label">Nombre Referencia 2 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="reference2_name" name="reference2_name"
+                            value="<?php echo isset($user_meta['hv_reference2_name']) ? esc_attr($user_meta['hv_reference2_name']) : ''; ?>" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="reference2_phone" class="form-label">Teléfono Referencia 2 <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="reference2_phone" name="reference2_phone"
+                            value="<?php echo isset($user_meta['hv_reference2_phone']) ? esc_attr($user_meta['hv_reference2_phone']) : ''; ?>" required>
+                    </div>
                 </div>
             </div>
         </div>
+
 
         <!-- Documento de identidad -->
         <div class="card mb-4">
@@ -345,9 +549,27 @@ if ($current_user->exists()) {
             </div>
         </div>
 
-        <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="terms_conditions" name="terms_conditions" required>
-            <label class="form-check-label" for="terms_conditions">Acepto los términos y condiciones <span class="text-danger">*</span></label>
+        <!-- Reemplaza el checkbox de términos y condiciones con esta versión ampliada -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title">Autorización y Compromiso</h3>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p>Declaro que la información proporcionada es verídica y me comprometo a cumplir con las normas y valores de la institución. Entiendo que mi participación como voluntario es de carácter altruista y sin remuneración económica.</p>
+
+                    <div class="mb-3">
+                        <label for="signature" class="form-label">Firma del voluntario (subir imagen) <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="signature" name="signature" accept="image/*" required>
+                        <div class="form-text">Formatos aceptados: JPG, PNG. Tamaño máximo: 2MB.</div>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="terms_conditions" name="terms_conditions" required>
+                        <label class="form-check-label" for="terms_conditions">Acepto los términos y condiciones <span class="text-danger">*</span></label>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary" id="submit-btn">
