@@ -25,6 +25,7 @@ $includes = [
     'includes/class-verification-page.php',   // Pública verificación
     'includes/class-volunteers-admin-page.php', // Página de administración
     'includes/class-volunteer-profile.php',   // Nuevo: Perfil de voluntario
+    'includes/class-volunteer-profile-editor.php' // Editor de perfil de voluntario
 ];
 
 if (is_admin()) {
@@ -42,6 +43,7 @@ add_action('init', function () {
     new Volunteer_Form_Handler();  // Manejo de formularios
     new Verification_Page();       // Página de verificación
     new Volunteer_Profile();       // Nuevo: Perfil de voluntario
+    new Volunteer_Profile_Editor(); // Editor de perfil de voluntario
 
     if (is_admin()) {
         new Volunteers_Admin_Page(); // Página de administración
@@ -54,8 +56,9 @@ add_action('admin_enqueue_scripts', function ($hook) {
     // Verificar páginas de voluntarios
     $is_volunteers_page = ('toplevel_page_volunteers' === $hook);
     $is_profile_page = (isset($_GET['page']) && 'volunteer_profile' === $_GET['page']);
+    $is_profile_page_edit = (isset($_GET['page']) && 'volunteer_profile_editor' === $_GET['page']);
 
-    if ($is_volunteers_page || $is_profile_page) {
+    if ($is_volunteers_page || $is_profile_page || $is_profile_page_edit) {
         // Bootstrap CSS (solo si no está cargado)
         if (!wp_style_is('bootstrap')) {
             wp_enqueue_style(
@@ -66,9 +69,21 @@ add_action('admin_enqueue_scripts', function ($hook) {
             );
         }
 
+        // Cargar Bootstrap JS si no está cargado
+        if (!wp_script_is('bootstrap-js')) {
+            wp_enqueue_script(
+                'hv-bootstrap-js',
+                'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+                ['jquery'],
+                '5.3.0',
+                true
+            );
+        }
+
+
         // ESTILOS: Usar plugin_dir_path() para obtener ruta física
         $admin_css = plugin_dir_path(__FILE__) . 'assets/css/admin-volunteers.css';
-        if (file_exists($admin_css)) {
+        if (file_exists(filename: $admin_css)) {
             wp_enqueue_style(
                 'hv-admin-styles',
                 plugin_dir_url(__FILE__) . 'assets/css/admin-volunteers.css',

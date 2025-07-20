@@ -1,6 +1,5 @@
 {
     "require": {
-        "htmlburger/carbon-fields": "^3.6",
         "phpoffice/phpspreadsheet": "^4.4"
     }
 }

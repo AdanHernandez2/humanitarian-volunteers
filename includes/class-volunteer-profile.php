@@ -4,9 +4,9 @@ class Volunteer_Profile
     public function __construct()
     {
         add_action('admin_menu', [$this, 'add_admin_menu']);
-        // Acción para verificar documentos
         add_action('wp_ajax_check_user_document', [$this, 'check_user_document']);
         add_action('wp_ajax_nopriv_check_user_document', [$this, 'check_user_document']);
+        add_action('wp_ajax_verify_volunteer', [$this, 'verify_volunteer']); // Nueva acción AJAX
     }
 
     public function add_admin_menu()
@@ -52,6 +52,14 @@ class Volunteer_Profile
         $is_verified = get_user_meta($user_id, '_is_verified', true) === 'yes' ||
             get_user_meta($user_id, 'identity_verified', true) === '1';
 
+        // Nuevos campos
+        $unique_code = get_user_meta($user_id, 'hv_unique_code', true);
+        $date_received = get_user_meta($user_id, 'hv_date_received', true);
+        $received_observations = get_user_meta($user_id, 'hv_received_observations', true);
+
+        // Verificar si es un employer
+        $is_employer = get_user_meta($user_id, '_user_type', true) === 'employers';
+
         // Obtener campos de selección múltiple
         $interest_areas = maybe_unserialize(get_user_meta($user_id, 'hv_interest_areas', true));
         $availability_days = maybe_unserialize(get_user_meta($user_id, 'hv_availability_days', true));
@@ -61,6 +69,13 @@ class Volunteer_Profile
             <a href="<?php echo admin_url('admin.php?page=volunteers'); ?>" class="page-title-action">
                 ← Volver a la lista
             </a>
+
+            <?php if ($is_employer): ?>
+                <div class="notice notice-info">
+                    <p>Este usuario es un voluntario.</p>
+                </div>
+            <?php endif; ?>
+
             <div class="container-cars-volunteer_profiler-grid">
                 <!-- Información Personal -->
                 <div class="card mt-4">
@@ -83,6 +98,10 @@ class Volunteer_Profile
                                 <p><strong>Estado:</strong>
                                     <?php if ($is_verified) : ?>
                                         <span class="badge bg-success">✅ Verificado</span>
+                                        <?php if ($unique_code): ?>
+                                            <br><strong>Código único:</strong> <?php echo esc_html($unique_code); ?>
+                                            <br><strong>Fecha verificación:</strong> <?php echo esc_html($date_received); ?>
+                                        <?php endif; ?>
                                     <?php else : ?>
                                         <span class="badge bg-danger">❌ No verificado</span>
                                     <?php endif; ?>
@@ -233,17 +252,170 @@ class Volunteer_Profile
                     </div>
                 </div>
 
+                <!-- Sección de Verificación (solo para employers) -->
+                <?php if ($is_employer): ?>
+                    <div class="card mt-4">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="h4 mb-0">Verificación de Voluntario</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4>Verificar Documentos</h4>
+                                    <p>Verifique que los documentos del voluntario estén completos y sean válidos antes de proceder con la verificación.</p>
+
+                                    <div class="mb-3">
+                                        <label for="received_observations" class="form-label">Observaciones:</label>
+                                        <textarea id="received_observations" class="form-control" rows="3" placeholder="Ingrese observaciones si es necesario" <?php echo $is_verified ? 'readonly disabled' : ''; ?>><?php echo esc_textarea($received_observations); ?></textarea>
+                                    </div>
+
+                                    <?php if ($date_received): ?>
+                                        <div class="mb-3">
+                                            <label class="form-label"><strong>Fecha de recepción:</strong></label>
+                                            <div>
+                                                <?php echo esc_html(date('d/m/Y H:i', strtotime($date_received))); ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if (!$is_verified): ?>
+                                        <button id="verify-volunteer-btn" class="btn btn-success" data-user-id="<?php echo $user_id; ?>">
+                                            <i class="fas fa-check-circle me-2"></i> Verificar Voluntario
+                                        </button>
+                                    <?php else: ?>
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Voluntario verificado. No es posible editar las observaciones.
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
-            <div class="mt-4">
-                <a href="<?php echo admin_url('user-edit.php?user_id=' . $user_id); ?>" class="btn btn-primary">
-                    Editar Perfil Completo
-                </a>
-                <a href="<?php echo admin_url('admin.php?page=volunteers'); ?>" class="btn btn-secondary">
-                    Volver a la lista
-                </a>
-            </div>
+
+
         </div>
+        <div class="mt-4">
+            <a href="<?php echo admin_url('admin.php?page=volunteer_profile_editor&user_id=' . $user_id); ?>" class="btn btn-primary">
+                Editar Perfil Completo
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=volunteers'); ?>" class="btn btn-secondary">
+                Volver a la lista
+            </a>
+        </div>
+
+        <script>
+            jQuery(document).ready(function($) {
+                $('#verify-volunteer-btn').on('click', function() {
+                    var button = $(this);
+                    var user_id = button.data('user-id');
+                    var observations = $('#received_observations').val();
+
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Procesando...');
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'verify_volunteer',
+                            user_id: user_id,
+                            observations: observations,
+                            security: '<?php echo wp_create_nonce("verify_volunteer_nonce"); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert('Voluntario verificado exitosamente. Código: ' + response.data.code);
+                                location.reload();
+                            } else {
+                                alert('Error: ' + response.data);
+                                button.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Verificar Voluntario');
+                            }
+                        },
+                        error: function() {
+                            alert('Error en la comunicación con el servidor');
+                            button.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Verificar Voluntario');
+                        }
+                    });
+                });
+            });
+        </script>
+
         <?php
+    }
+
+
+
+    /**
+     * Verifica al voluntario y genera código único
+     */
+    public function verify_volunteer()
+    {
+        check_ajax_referer('verify_volunteer_nonce', 'security');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('No tienes permisos para realizar esta acción');
+        }
+
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $observations = isset($_POST['observations']) ? sanitize_textarea_field($_POST['observations']) : '';
+
+        if (!$user_id) {
+            wp_send_json_error('ID de usuario no válido');
+        }
+
+        // Verificar que el usuario es un employer
+        if (get_user_meta($user_id, '_user_type', true) !== 'employers') {
+            wp_send_json_error('Este usuario no es un voluntario (employer)');
+        }
+
+        // Verificar que no esté ya verificado
+        if (get_user_meta($user_id, '_is_verified', true) === 'yes') {
+            wp_send_json_error('Este usuario ya está verificado');
+        }
+
+        // Generar código único
+        $code = $this->generate_unique_code($user_id);
+
+        if (!$code) {
+            wp_send_json_error('Error al generar el código único');
+        }
+
+        // Actualizar metadatos
+        update_user_meta($user_id, '_is_verified', 'yes');
+        update_user_meta($user_id, 'hv_unique_code', $code);
+        update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
+        update_user_meta($user_id, 'hv_received_observations', $observations);
+
+        wp_send_json_success([
+            'code' => $code,
+            'message' => 'Voluntario verificado exitosamente'
+        ]);
+    }
+
+    /**
+     * Genera un código único para el voluntario
+     */
+    private function generate_unique_code($user_id)
+    {
+        // Formato: VOL-0000ID (ej. VOL-00001 para ID 1)
+        $code = 'VOL-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
+
+        // Verificar que el código no exista (aunque es poco probable con este formato)
+        $existing_user = get_users([
+            'meta_key' => 'hv_unique_code',
+            'meta_value' => $code,
+            'exclude' => [$user_id],
+            'number' => 1
+        ]);
+
+        if (!empty($existing_user)) {
+            // Si por alguna razón existe, añadir sufijo
+            $code = $code . '-' . uniqid();
+        }
+
+        return $code;
     }
 
     /**

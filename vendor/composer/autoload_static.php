@@ -26,7 +26,6 @@ class ComposerStaticInit24e41bbaee1332276f826502c7093d78
         array (
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
-            'Carbon_Fields\\' => 14,
         ),
     );
 
@@ -63,10 +62,6 @@ class ComposerStaticInit24e41bbaee1332276f826502c7093d78
         'Complex\\' => 
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
-        ),
-        'Carbon_Fields\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/htmlburger/carbon-fields/core',
         ),
     );
 
