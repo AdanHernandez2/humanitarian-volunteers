@@ -333,8 +333,22 @@ class Volunteer_Profile
                                 button.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Verificar Voluntario');
                             }
                         },
-                        error: function() {
-                            alert('Error en la comunicación con el servidor');
+                        error: function(xhr, status, error) {
+                            // Mostrar detalles del error
+                            let errorMsg = 'Error en la comunicación con el servidor';
+
+                            if (xhr.responseJSON && xhr.responseJSON.data) {
+                                errorMsg += ': ' + xhr.responseJSON.data;
+                            } else if (xhr.responseText) {
+                                try {
+                                    const jsonResponse = JSON.parse(xhr.responseText);
+                                    errorMsg = jsonResponse.data || errorMsg;
+                                } catch (e) {
+                                    errorMsg += '. Detalles: ' + xhr.responseText;
+                                }
+                            }
+
+                            alert(errorMsg);
                             button.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Verificar Voluntario');
                         }
                     });
@@ -396,7 +410,7 @@ class Volunteer_Profile
             'code' => $code
         ];
 
-        // 3. Generar PDFs solo si no existen
+        // 3. --- AQUÍ VA EL BLOQUE DE GENERACIÓN DE PDFs ---
         $pdf_generator = new PDF_Generator();
 
         try {
@@ -407,18 +421,24 @@ class Volunteer_Profile
             // Generar si no existen
             if (!$certificate_path) {
                 $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
+                if (!$certificate_path || !file_exists($certificate_path)) {
+                    throw new Exception('No se pudo generar el certificado');
+                }
             }
 
             if (!$planilla_path) {
                 $qr_url = $pdf_generator->generate_qr_code($code);
                 $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
+                if (!$planilla_path || !file_exists($planilla_path)) {
+                    throw new Exception('No se pudo generar la planilla');
+                }
             }
         } catch (Exception $e) {
             error_log("Error generando PDFs: " . $e->getMessage());
-            wp_send_json_error('Error generando documentos');
+            wp_send_json_error('Error generando documentos: ' . $e->getMessage());
         }
 
-        // 4. Enviar email
+        // 4. Enviar email con adjuntos
         $email_manager = new Email_Manager();
         $email_sent = $email_manager->send_verification_email($user_id);
 

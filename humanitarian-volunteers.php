@@ -21,7 +21,7 @@ if (file_exists(HV_PLUGIN_PATH . 'vendor/autoload.php')) {
 $includes = [
     'includes/class-form-handler.php',        // Procesamiento de formularios
     'includes/class-email-manager.php',       // Gestión de emails
-    // 'includes/class-pdf-generator.php',       // Generación de PDFs
+    'includes/class-pdf-generator.php',       // Generación de PDFs
     'includes/class-verification-page.php',   // Pública verificación
     'includes/class-volunteers-admin-page.php', // Página de administración
     'includes/class-volunteer-profile.php',   // Nuevo: Perfil de voluntario
