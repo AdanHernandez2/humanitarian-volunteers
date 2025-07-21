@@ -1,7 +1,7 @@
 <?php
 // templates/emails/email-user-verified.php
 include HV_PLUGIN_PATH . 'templates/email-header.php';
-
+$site_url = get_site_url();
 /**
  * Variables disponibles:
  * $user_data - Array con datos del usuario

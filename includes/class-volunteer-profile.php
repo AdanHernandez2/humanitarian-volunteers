@@ -388,6 +388,44 @@ class Volunteer_Profile
         update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
         update_user_meta($user_id, 'hv_received_observations', $observations);
 
+        // 2. Obtener datos de usuario
+        $user_data = [
+            'first_name' => get_user_meta($user_id, 'first_name', true),
+            'last_name' => get_user_meta($user_id, 'last_name', true),
+            'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
+            'code' => $code
+        ];
+
+        // 3. Generar PDFs solo si no existen
+        $pdf_generator = new PDF_Generator();
+
+        try {
+            // Verificar si ya existen
+            $certificate_path = $pdf_generator->pdf_exists($user_id, 'certificate');
+            $planilla_path = $pdf_generator->pdf_exists($user_id, 'planilla');
+
+            // Generar si no existen
+            if (!$certificate_path) {
+                $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
+            }
+
+            if (!$planilla_path) {
+                $qr_url = $pdf_generator->generate_qr_code($code);
+                $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
+            }
+        } catch (Exception $e) {
+            error_log("Error generando PDFs: " . $e->getMessage());
+            wp_send_json_error('Error generando documentos');
+        }
+
+        // 4. Enviar email
+        $email_manager = new Email_Manager();
+        $email_sent = $email_manager->send_verification_email($user_id);
+
+        if (!$email_sent) {
+            error_log("Falló envío de email para usuario: $user_id");
+        }
+
         wp_send_json_success([
             'code' => $code,
             'message' => 'Voluntario verificado exitosamente'
