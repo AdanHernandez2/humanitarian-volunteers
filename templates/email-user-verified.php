@@ -1,7 +1,7 @@
 <?php
 // templates/emails/email-user-verified.php
 include HV_PLUGIN_PATH . 'templates/email-header.php';
-$site_url = get_site_url();
+
 /**
  * Variables disponibles:
  * $user_data - Array con datos del usuario
@@ -34,7 +34,6 @@ $site_url = get_site_url();
 
 <div class="footer">
     <p>Este es un mensaje automático. Por favor no respondas a este correo.</p>
-    <p>&copy; <?php echo date('Y'); ?> <?php echo $site_name; ?></p>
 </div>
 
 
