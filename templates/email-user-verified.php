@@ -34,7 +34,6 @@ include HV_PLUGIN_PATH . 'templates/email-header.php';
 
 <div class="footer">
     <p>Este es un mensaje automático. Por favor no respondas a este correo.</p>
-    <p>&copy; <?php echo date('Y'); ?> <?php echo $site_name; ?></p>
 </div>
 
 

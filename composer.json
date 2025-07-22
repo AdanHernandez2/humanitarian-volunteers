@@ -1,6 +1,6 @@
 {
     "require": {
-        "htmlburger/carbon-fields": "^3.6",
-        "phpoffice/phpspreadsheet": "^4.4"
+        "phpoffice/phpspreadsheet": "^4.4",
+        "bacon/bacon-qr-code": "^3.0"
     }
 }

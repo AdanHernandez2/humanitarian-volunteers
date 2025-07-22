@@ -22,11 +22,18 @@ class ComposerStaticInit24e41bbaee1332276f826502c7093d78
         array (
             'Matrix\\' => 7,
         ),
+        'D' => 
+        array (
+            'DASPRiD\\Enum\\' => 13,
+        ),
         'C' => 
         array (
             'Composer\\Pcre\\' => 14,
             'Complex\\' => 8,
-            'Carbon_Fields\\' => 14,
+        ),
+        'B' => 
+        array (
+            'BaconQrCode\\' => 12,
         ),
     );
 
@@ -56,6 +63,10 @@ class ComposerStaticInit24e41bbaee1332276f826502c7093d78
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
         ),
+        'DASPRiD\\Enum\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/dasprid/enum/src',
+        ),
         'Composer\\Pcre\\' => 
         array (
             0 => __DIR__ . '/..' . '/composer/pcre/src',
@@ -64,9 +75,9 @@ class ComposerStaticInit24e41bbaee1332276f826502c7093d78
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
-        'Carbon_Fields\\' => 
+        'BaconQrCode\\' => 
         array (
-            0 => __DIR__ . '/..' . '/htmlburger/carbon-fields/core',
+            0 => __DIR__ . '/..' . '/bacon/bacon-qr-code/src',
         ),
     );
 

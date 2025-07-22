@@ -72,11 +72,16 @@
   font-size: 16px;
   font-family: Poppins, sans-serif;
 }
-.volunteer-profile .btn-primary {
+
+.admin_page_volunteer_profile_editor .btn-primary,
+.admin_page_volunteer_profile .btn-primary {
   background-color: #ce1126;
 }
-.volunteer-profile .btn-primary,
-.volunteer-profile .btn-secondary {
+
+.admin_page_volunteer_profile .btn-primary,
+.admin_page_volunteer_profile .btn-secondary,
+.admin_page_volunteer_profile_editor .btn-secondary,
+.admin_page_volunteer_profile_editor .btn-primary {
   font-family: Montserrat, sans-serif;
   letter-spacing: 0.5px;
   border: none;
