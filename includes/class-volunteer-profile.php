@@ -398,58 +398,50 @@ class Volunteer_Profile
 
         // Actualizar metadatos
         update_user_meta($user_id, '_is_verified', 'yes');
-        update_user_meta($user_id, 'hv_unique_code', $code);
-        update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
-        update_user_meta($user_id, 'hv_received_observations', $observations);
-
-        // 2. Obtener datos de usuario
-        $user_data = [
-            'first_name' => get_user_meta($user_id, 'first_name', true),
-            'last_name' => get_user_meta($user_id, 'last_name', true),
-            'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
-            'code' => $code
-        ];
-
-        // 3. --- AQUÍ VA EL BLOQUE DE GENERACIÓN DE PDFs ---
-        $pdf_generator = new PDF_Generator();
+        update_user_meta($user_id, 'identity_verified', '1');
+        //update_user_meta($user_id, 'hv_unique_code', $code);
+        //update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
+        //update_user_meta($user_id, 'hv_received_observations', $observations);
 
         try {
-            // Verificar si ya existen
-            $certificate_path = $pdf_generator->pdf_exists($user_id, 'certificate');
-            $planilla_path = $pdf_generator->pdf_exists($user_id, 'planilla');
+            // Obtener datos de usuario
+            $user_data = [
+                'first_name' => get_user_meta($user_id, 'first_name', true),
+                'last_name' => get_user_meta($user_id, 'last_name', true),
+                'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
+                'code' => $code
+            ];
 
-            // Generar si no existen
-            if (!$certificate_path) {
-                $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
-                if (!$certificate_path || !file_exists($certificate_path)) {
-                    throw new Exception('No se pudo generar el certificado');
-                }
+            // Generar PDFs
+            $pdf_generator = new PDF_Generator();
+
+            // Generar certificado
+            $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
+
+            // Generar planilla con QR
+            $qr_url = $pdf_generator->generate_qr_code($code);
+            $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
+
+            // Enviar email con adjuntos
+            $email_manager = new Email_Manager();
+            $email_sent = $email_manager->send_verification_email($user_id, [
+                'certificate_path' => $certificate_path,
+                'planilla_path' => $planilla_path
+            ]);
+
+            if (!$email_sent) {
+                error_log("Falló envío de email para usuario: $user_id");
+                // No enviar error aquí para no frustrar el proceso completo
             }
 
-            if (!$planilla_path) {
-                $qr_url = $pdf_generator->generate_qr_code($code);
-                $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
-                if (!$planilla_path || !file_exists($planilla_path)) {
-                    throw new Exception('No se pudo generar la planilla');
-                }
-            }
-        } catch (Exception $e) {
-            error_log("Error generando PDFs: " . $e->getMessage());
-            wp_send_json_error('Error generando documentos: ' . $e->getMessage());
+            wp_send_json_success([
+                'code' => $code,
+                'message' => 'Voluntario verificado exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error en verify_volunteer: " . $e->getMessage());
+            wp_send_json_error('Error durante la verificación: ' . $e->getMessage());
         }
-
-        // 4. Enviar email con adjuntos
-        $email_manager = new Email_Manager();
-        $email_sent = $email_manager->send_verification_email($user_id);
-
-        if (!$email_sent) {
-            error_log("Falló envío de email para usuario: $user_id");
-        }
-
-        wp_send_json_success([
-            'code' => $code,
-            'message' => 'Voluntario verificado exitosamente'
-        ]);
     }
 
     /**
