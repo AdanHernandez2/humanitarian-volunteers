@@ -62,7 +62,17 @@ class Verification_Page
         ];
 
         $filename = "certificado-{$user_data['first_name']}-{$user_id}.pdf";
-        $file_url = content_url('/uploads/humanitarios-pdfs/' . $filename);
+
+        // Obtener rutas absolutas
+        $upload_dir = wp_upload_dir();
+        $pdf_path = $upload_dir['basedir'] . '/humanitarios-pdfs/' . $filename;
+        $file_url = $upload_dir['baseurl'] . '/humanitarios-pdfs/' . $filename;
+
+        // Verificar si el archivo existe
+        if (!file_exists($pdf_path)) {
+            echo '<div class="error">Certificado no encontrado: ' . esc_html($filename) . '</div>';
+            return;
+        }
 
         echo '<embed src="' . esc_url($file_url) . '" type="application/pdf" width="100%" height="800px">';
     }

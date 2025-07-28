@@ -558,12 +558,6 @@ if ($current_user->exists()) {
                 <div class="mb-3">
                     <p>Declaro que la información proporcionada es verídica y me comprometo a cumplir con las normas y valores de la institución. Entiendo que mi participación como voluntario es de carácter altruista y sin remuneración económica.</p>
 
-                    <div class="mb-3">
-                        <label for="signature" class="form-label">Firma del voluntario (subir imagen) <span class="text-danger">*</span></label>
-                        <input type="file" class="form-control" id="signature" name="signature" accept="image/*" required>
-                        <div class="form-text">Formatos aceptados: JPG, PNG. Tamaño máximo: 2MB.</div>
-                    </div>
-
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input" id="terms_conditions" name="terms_conditions" required>
                         <label class="form-check-label" for="terms_conditions">Acepto los términos y condiciones <span class="text-danger">*</span></label>

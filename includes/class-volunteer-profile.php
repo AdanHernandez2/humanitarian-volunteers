@@ -100,7 +100,7 @@ class Volunteer_Profile
                                         <span class="badge bg-success">✅ Verificado</span>
                                         <?php if ($unique_code): ?>
                                             <br><strong>Código único:</strong> <?php echo esc_html($unique_code); ?>
-                                            <br><strong>Fecha verificación:</strong> <?php echo esc_html($date_received); ?>
+                                            <br><strong>Fecha verificación:</strong> <?php echo esc_html(date('d/m/Y H:i', strtotime($date_received))); ?>
                                         <?php endif; ?>
                                     <?php else : ?>
                                         <span class="badge bg-danger">❌ No verificado</span>
@@ -228,13 +228,6 @@ class Volunteer_Profile
                                 <?php
                                 $document_id = get_user_meta($user_id, 'hv_identity_document', true);
                                 $this->render_document($document_id);
-                                ?>
-                            </div>
-                            <div class="col-md-6">
-                                <h4>Firma del Voluntario</h4>
-                                <?php
-                                $signature_id = get_user_meta($user_id, 'hv_signature', true);
-                                $this->render_document($signature_id, 'No se ha subido firma');
                                 ?>
                             </div>
                         </div>
@@ -398,9 +391,9 @@ class Volunteer_Profile
 
         // Actualizar metadatos
         update_user_meta($user_id, '_is_verified', 'yes');
-        update_user_meta($user_id, 'identity_verified', '1');
-        //update_user_meta($user_id, 'hv_unique_code', $code);
-        //update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
+        //update_user_meta($user_id, 'identity_verified', '1');
+        update_user_meta($user_id, 'hv_unique_code', $code);
+        update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
         //update_user_meta($user_id, 'hv_received_observations', $observations);
 
         try {
@@ -447,7 +440,7 @@ class Volunteer_Profile
     /**
      * Genera un código único para el voluntario
      */
-    private function generate_unique_code($user_id)
+    private function generate_unique_code($user_id): string
     {
         // Formato: VOL-0000ID (ej. VOL-00001 para ID 1)
         $code = 'VOL-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
