@@ -57,7 +57,7 @@ class Volunteer_Form_Handler
                 'reference1_phone',
                 'reference2_name',
                 'reference2_phone',
-                'terms_conditions'
+                'accept_terms'
             ];
 
             $missing_fields = [];
@@ -71,7 +71,7 @@ class Volunteer_Form_Handler
                 throw new Exception('Faltan campos obligatorios: ' . implode(', ', $missing_fields));
             }
 
-            if (empty($_POST['terms_conditions'])) {
+            if (empty($_POST['accept_terms'])) {
                 throw new Exception('Debes aceptar los términos y condiciones');
             }
 
@@ -84,10 +84,14 @@ class Volunteer_Form_Handler
                 'province' => sanitize_text_field($_POST['province']),
                 'phone' => sanitize_text_field($_POST['phone']),
                 'email' => sanitize_email($_POST['email']),
-                'skills' => sanitize_text_field($_POST['skills']),
+                'address' => sanitize_text_field($_POST['address']), // Añadido
+                'marital_status' => sanitize_text_field($_POST['marital_status'] ?? ''), // Añadido
+                'education_level' => sanitize_text_field($_POST['education_level']), // Añadido
+                'skills' => sanitize_text_field($_POST['skills'] ?? ''),
                 'skills_other' => sanitize_text_field($_POST['skills_other'] ?? ''),
                 'weekend_availability' => sanitize_text_field($_POST['weekend_availability']),
                 'travel_availability' => sanitize_text_field($_POST['travel_availability']),
+                'international_availability' => sanitize_text_field($_POST['international_availability']), // Añadido
                 'has_experience' => sanitize_text_field($_POST['has_experience']),
                 'experience_desc' => sanitize_textarea_field($_POST['experience_desc'] ?? ''),
                 'nationality' => sanitize_text_field($_POST['nationality'] ?? ''),
@@ -96,14 +100,13 @@ class Volunteer_Form_Handler
                 'shirt_size' => sanitize_text_field($_POST['shirt_size'] ?? ''),
                 'profession' => sanitize_text_field($_POST['profession'] ?? ''),
                 'medical_condition' => sanitize_text_field($_POST['medical_condition'] ?? ''),
-                'physical_limitations' => sanitize_textarea_field($_POST['physical_limitations'] ?? ''), // Nuevo campo
-                'references' => sanitize_textarea_field($_POST['references'] ?? ''),
-                'reference1_name' => sanitize_text_field($_POST['reference1_name']), // Nuevo campo
-                'reference1_phone' => sanitize_text_field($_POST['reference1_phone']), // Nuevo campo
-                'reference2_name' => sanitize_text_field($_POST['reference2_name']), // Nuevo campo
-                'reference2_phone' => sanitize_text_field($_POST['reference2_phone']), // Nuevo campo
-                'availability_hours' => sanitize_text_field($_POST['availability_hours']), // Nuevo campo
-                'international_availability' => sanitize_text_field($_POST['international_availability']),
+                'physical_limitations' => sanitize_textarea_field($_POST['physical_limitations'] ?? ''),
+                'reference1_name' => sanitize_text_field($_POST['reference1_name']),
+                'reference1_phone' => sanitize_text_field($_POST['reference1_phone']),
+                'reference2_name' => sanitize_text_field($_POST['reference2_name']),
+                'reference2_phone' => sanitize_text_field($_POST['reference2_phone']),
+                'availability_hours' => sanitize_text_field($_POST['availability_hours']),
+                'accept_terms' => isset($_POST['accept_terms']) ? 'yes' : 'no' // Manejo correcto del checkbox
             ];
 
             // Manejar campos de arrays (selección múltiple)
@@ -289,12 +292,12 @@ class Volunteer_Form_Handler
                 'birth_date' => 'hv_birth_date',
                 'province' => 'hv_province',
                 'phone' => 'hv_phone',
-                'address' => 'hv_address', // Nuevo campo
-                'marital_status' => 'hv_marital_status', // Nuevo campo
-                'education_level' => 'hv_education_level', // Nuevo campo
+                'address' => 'hv_address',
+                'marital_status' => 'hv_marital_status',
+                'education_level' => 'hv_education_level',
                 'weekend_availability' => 'hv_weekend_availability',
                 'travel_availability' => 'hv_travel_availability',
-                'international_availability' => 'hv_international_availability', // Nuevo campo
+                'international_availability' => 'hv_international_availability',
                 'has_experience' => 'hv_has_experience',
                 'experience_desc' => 'hv_experience_desc',
                 'nationality' => 'hv_nationality',
@@ -303,15 +306,15 @@ class Volunteer_Form_Handler
                 'shirt_size' => 'hv_shirt_size',
                 'profession' => 'hv_profession',
                 'medical_condition' => 'hv_medical_condition',
-                'physical_limitations' => 'hv_physical_limitations', // Nuevo campo
+                'physical_limitations' => 'hv_physical_limitations',
                 'references' => 'hv_references',
-                'reference1_name' => 'hv_reference1_name', // Nuevo campo
-                'reference1_phone' => 'hv_reference1_phone', // Nuevo campo
-                'reference2_name' => 'hv_reference2_name', // Nuevo campo
-                'reference2_phone' => 'hv_reference2_phone', // Nuevo campo
-                'availability_hours' => 'hv_availability_hours', // Nuevo campo
+                'reference1_name' => 'hv_reference1_name',
+                'reference1_phone' => 'hv_reference1_phone',
+                'reference2_name' => 'hv_reference2_name',
+                'reference2_phone' => 'hv_reference2_phone',
+                'availability_hours' => 'hv_availability_hours',
                 'identity_document' => 'hv_identity_document',
-
+                'accept_terms' => 'hv_accept_terms'
             ];
 
             foreach ($meta_map as $field => $meta_key) {
