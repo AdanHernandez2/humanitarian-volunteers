@@ -45,7 +45,22 @@ class Email_Manager
         $user = get_userdata($user_id);
         $code = get_user_meta($user_id, 'hv_unique_code', true);
 
-        // Enviar email con adjuntos
+        // Obtener rutas de los PDFs
+        $upload_dir = wp_upload_dir();
+        $pdf_dir = $upload_dir['basedir'] . '/humanitarios-pdfs/';
+
+        $certificate_path = $pdf_dir . "certificado-{$user->first_name}-{$user_id}.pdf";
+        $planilla_path = $pdf_dir . "planilla-{$user->first_name}-{$user_id}.pdf";
+
+        // Verificar que existen
+        $attachments = [];
+        if (file_exists($certificate_path)) {
+            $attachments[] = $certificate_path;
+        }
+        if (file_exists($planilla_path)) {
+            $attachments[] = $planilla_path;
+        }
+
         $this->send_email(
             $user->user_email,
             '¡Verificación Completada!',
@@ -55,15 +70,7 @@ class Email_Manager
                 'code' => $code,
                 'site_name' => get_bloginfo('name')
             ],
-            [
-                // Descomentar cuando tengas el generador de PDF
-                /*
-                [
-                    'content' => $pdf_content,
-                    'filename' => 'credencial-voluntario-' . $user_id . '.pdf',
-                    'type' => 'application/pdf'
-                ]
-                */]
+            $attachments // Adjuntar los PDFs aquí
         );
     }
 

@@ -436,38 +436,38 @@ class Volunteers_Admin_Page
         exit;
     }
 
-    public function ajax_verify_volunteer()
-    {
-        check_ajax_referer('hv_admin_nonce', 'nonce');
+    // public function ajax_verify_volunteer()
+    // {
+    //     check_ajax_referer('hv_admin_nonce', 'nonce');
 
-        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    //     $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
 
-        if (!$user_id) {
-            wp_send_json_error(['message' => 'ID de usuario inválido']);
-        }
+    //     if (!$user_id) {
+    //         wp_send_json_error(['message' => 'ID de usuario inválido']);
+    //     }
 
-        // Actualizar metadatos
-        update_user_meta($user_id, '_is_verified', 'yes');
-        update_user_meta($user_id, 'identity_verified', '1');
+    //     // Actualizar metadatos
+    //     update_user_meta($user_id, '_is_verified', 'yes');
+    //     update_user_meta($user_id, 'identity_verified', '1');
 
-        // Actualizar campos con Carbon Fields
-        if (function_exists('carbon_set_user_meta')) {
-            carbon_set_user_meta($user_id, 'hv_status', 'verified');
+    //     // Actualizar campos con Carbon Fields
+    //     if (function_exists('carbon_set_user_meta')) {
+    //         carbon_set_user_meta($user_id, 'hv_status', 'verified');
 
-            // Generar código único si no existe
-            if (!carbon_get_user_meta($user_id, 'hv_unique_code')) {
-                $code = 'VOL-' . str_pad($user_id, 8, '0', STR_PAD_LEFT) . '-' . bin2hex(random_bytes(2));
-                carbon_set_user_meta($user_id, 'hv_unique_code', $code);
-            }
-        }
+    //         // Generar código único si no existe
+    //         if (!carbon_get_user_meta($user_id, 'hv_unique_code')) {
+    //             $code = 'VOL-' . str_pad($user_id, 8, '0', STR_PAD_LEFT) . '-' . bin2hex(random_bytes(2));
+    //             carbon_set_user_meta($user_id, 'hv_unique_code', $code);
+    //         }
+    //     }
 
-        // Disparar email de confirmación
-        do_action('volunteer_verified', $user_id);
+    //     // Disparar email de confirmación
+    //     do_action('volunteer_verified', $user_id);
 
-        wp_send_json_success([
-            'message' => 'Usuario verificado con éxito',
-            'new_status' => '<span class="badge bg-success">✅ Verificado</span>',
-            'new_button' => '<button class="btn btn-sm btn-secondary" disabled>Verificado</button>'
-        ]);
-    }
+    //     wp_send_json_success([
+    //         'message' => 'Usuario verificado con éxito',
+    //         'new_status' => '<span class="badge bg-success">✅ Verificado</span>',
+    //         'new_button' => '<button class="btn btn-sm btn-secondary" disabled>Verificado</button>'
+    //     ]);
+    // }
 }
