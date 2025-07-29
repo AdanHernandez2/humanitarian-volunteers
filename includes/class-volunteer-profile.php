@@ -558,65 +558,85 @@ class Volunteer_Profile
 <?php }
     }
 
+    /**
+     * Reenvía los PDFs al usuario por correo
+     */
     public function resend_credentials()
     {
-        // Verificación básica
         if (!isset($_POST['security']) || !wp_verify_nonce($_POST['security'], 'hv_admin_nonce')) {
             wp_send_json_error('Acceso no autorizado (nonce inválido)', 403);
         }
 
-        // Luego verificar capacidades
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('No tienes permisos para esta acción', 403);
-        }
-
-        // Resto del código...
-        $user_id = intval($_POST['user_id'] ?? 0);
-        if (!$user_id) {
-            wp_send_json_error('ID de usuario inválido', 400);
+            wp_send_json_error('Permisos insuficientes', 403);
         }
 
         $user_id = intval($_POST['user_id'] ?? 0);
-        if (!$user_id) {
-            wp_send_json_error('ID de usuario inválido', 400);
-        }
-
-        // Obtener usuario y rutas de archivos
         $user = get_userdata($user_id);
-        $upload_dir = wp_upload_dir();
-        $pdf_dir = $upload_dir['basedir'] . '/humanitarios-pdfs/';
+        if (!$user) {
+            wp_send_json_error('Usuario no encontrado', 404);
+        }
 
-        $attachments = [];
-        $files = [
-            "certificado-{$user->first_name}-{$user_id}.pdf",
-            "planilla-{$user->first_name}-{$user_id}.pdf"
+        $user_data = [
+            'first_name' => get_user_meta($user_id, 'first_name', true),
+            'last_name'  => get_user_meta($user_id, 'last_name', true),
+            'email'      => $user->user_email
         ];
 
-        // Buscar archivos existentes
+        $upload_dir = wp_upload_dir();
+        $pdf_dir = $upload_dir['basedir'] . '/humanitarios-pdfs/';
+        $attachments = [];
+        $missing = [];
+
+        $files = [
+            "certificado-{$user_data['first_name']}-{$user_id}.pdf",
+            "planilla-{$user_data['first_name']}-{$user_id}.pdf"
+        ];
+
         foreach ($files as $file) {
             $path = $pdf_dir . $file;
             if (file_exists($path)) {
                 $attachments[] = $path;
+            } else {
+                $missing[] = $file;
             }
         }
 
-        // Configurar y enviar correo
-        $to = $user->user_email;
-        $subject = 'Tus credenciales como voluntario';
-        $message = 'Hola ' . $user->first_name . ",\n\nAdjuntamos tus credenciales.\n\nGracias por participar.";
+        if (empty($user_data['email']) || !is_email($user_data['email'])) {
+            wp_send_json_error([
+                'message' => 'Correo electrónico no válido.',
+                'email' => $user_data['email']
+            ], 500);
+        }
 
-        // Intento de envío simple
-        $sent = wp_mail($to, $subject, $message, '', $attachments);
+        if (!empty($missing)) {
+            wp_send_json_error([
+                'message' => 'Faltan archivos adjuntos.',
+                'missing_files' => $missing
+            ], 500);
+        }
+
+        $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
+        $sent = wp_mail(
+            $user_data['email'],
+            'Tus credenciales como voluntario',
+            "Hola {$user_data['first_name']},\n\nAdjuntamos tus credenciales.\n\nGracias por participar.",
+            $headers,
+            $attachments
+        );
 
         if ($sent) {
             wp_send_json_success('Credenciales enviadas correctamente');
         } else {
-            // Verificar si el problema es de configuración SMTP
-            if (!function_exists('mail')) {
-                wp_send_json_error('El servidor no tiene configurado el envío de correos. Contacta al administrador.');
-            } else {
-                wp_send_json_error('Error al enviar el correo. Verifica la configuración de correo de WordPress.');
-            }
+            wp_send_json_error([
+                'message' => 'Error al enviar el correo.',
+                'debug' => [
+                    'email' => $user_data['email'],
+                    'attachments' => $attachments,
+                    'headers' => $headers
+                ]
+            ]);
         }
     }
 }

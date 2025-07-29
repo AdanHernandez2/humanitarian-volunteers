@@ -2,7 +2,7 @@
 /*
 Plugin Name: Humanitarian Volunteers
 Description: Sistema de gestión de voluntarios humanitarios
-Version: 2.1
+Version: 2.2
 Author: Humanitarios
 */
 

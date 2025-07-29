@@ -31,7 +31,7 @@ class Email_Manager
         $this->send_email(
             $user->user_email,
             'Registro en Proceso',
-            HV_PLUGIN_PATH . 'templates/email/admin/email-user-pending.php',
+            HV_PLUGIN_PATH . 'templates/email/user/email-user-pending.php',
             [
                 'name' => $user->first_name,
                 'site_name' => get_bloginfo('name'),
