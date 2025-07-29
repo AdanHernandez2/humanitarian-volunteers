@@ -7,6 +7,7 @@ class Volunteer_Profile
         add_action('wp_ajax_check_user_document', [$this, 'check_user_document']);
         add_action('wp_ajax_nopriv_check_user_document', [$this, 'check_user_document']);
         add_action('wp_ajax_verify_volunteer', [$this, 'verify_volunteer']); // Nueva acción AJAX
+        add_action('wp_ajax_resend_credentials', [$this, 'resend_credentials']);
     }
 
     public function add_admin_menu()
@@ -106,6 +107,11 @@ class Volunteer_Profile
                                         <span class="badge bg-danger">❌ No verificado</span>
                                     <?php endif; ?>
                                 </p>
+
+                                <?php if ($is_verified && current_user_can('manage_options')) : ?>
+                                    <button id="resend-credentials-btn" class="button button-secondary" data-user-id="<?php echo esc_attr($user_id); ?>">Reenviar credenciales</button>
+                                    <span id="resend-credentials-status"></span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -346,6 +352,52 @@ class Volunteer_Profile
                         }
                     });
                 });
+
+                $('#resend-credentials-btn').on('click', function() {
+                    var button = $(this);
+                    var user_id = button.data('user-id');
+                    var status_div = $('#resend-credentials-status');
+
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Enviando...');
+                    status_div.removeClass('text-success text-danger').html('');
+
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'resend_credentials',
+                            user_id: user_id,
+                            security: '<?php echo wp_create_nonce("resend_credentials_nonce"); ?>'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                status_div.addClass('text-success').html('✔️ Credenciales reenviadas exitosamente');
+                            } else {
+                                status_div.addClass('text-danger').html('❌ Error: ' + response.data);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            // Mostrar detalles del error
+                            let errorMsg = 'Error en la comunicación con el servidor';
+
+                            if (xhr.responseJSON && xhr.responseJSON.data) {
+                                errorMsg += ': ' + xhr.responseJSON.data;
+                            } else if (xhr.responseText) {
+                                try {
+                                    const jsonResponse = JSON.parse(xhr.responseText);
+                                    errorMsg = jsonResponse.data || errorMsg;
+                                } catch (e) {
+                                    errorMsg += '. Detalles: ' + xhr.responseText;
+                                }
+                            }
+
+                            status_div.addClass('text-danger').html('❌ ' + errorMsg);
+                        },
+                        complete: function() {
+                            button.prop('disabled', false).html('Reenviar credenciales');
+                        }
+                    });
+                });
             });
         </script>
 
@@ -504,6 +556,68 @@ class Volunteer_Profile
                 <?php echo esc_html($empty_message); ?>
             </div>
 <?php }
+    }
+
+    public function resend_credentials()
+    {
+        // Verificación básica
+        if (!isset($_POST['security']) || !wp_verify_nonce($_POST['security'], 'hv_admin_nonce')) {
+            wp_send_json_error('Acceso no autorizado (nonce inválido)', 403);
+        }
+
+        // Luego verificar capacidades
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('No tienes permisos para esta acción', 403);
+        }
+
+        // Resto del código...
+        $user_id = intval($_POST['user_id'] ?? 0);
+        if (!$user_id) {
+            wp_send_json_error('ID de usuario inválido', 400);
+        }
+
+        $user_id = intval($_POST['user_id'] ?? 0);
+        if (!$user_id) {
+            wp_send_json_error('ID de usuario inválido', 400);
+        }
+
+        // Obtener usuario y rutas de archivos
+        $user = get_userdata($user_id);
+        $upload_dir = wp_upload_dir();
+        $pdf_dir = $upload_dir['basedir'] . '/humanitarios-pdfs/';
+
+        $attachments = [];
+        $files = [
+            "certificado-{$user->first_name}-{$user_id}.pdf",
+            "planilla-{$user->first_name}-{$user_id}.pdf"
+        ];
+
+        // Buscar archivos existentes
+        foreach ($files as $file) {
+            $path = $pdf_dir . $file;
+            if (file_exists($path)) {
+                $attachments[] = $path;
+            }
+        }
+
+        // Configurar y enviar correo
+        $to = $user->user_email;
+        $subject = 'Tus credenciales como voluntario';
+        $message = 'Hola ' . $user->first_name . ",\n\nAdjuntamos tus credenciales.\n\nGracias por participar.";
+
+        // Intento de envío simple
+        $sent = wp_mail($to, $subject, $message, '', $attachments);
+
+        if ($sent) {
+            wp_send_json_success('Credenciales enviadas correctamente');
+        } else {
+            // Verificar si el problema es de configuración SMTP
+            if (!function_exists('mail')) {
+                wp_send_json_error('El servidor no tiene configurado el envío de correos. Contacta al administrador.');
+            } else {
+                wp_send_json_error('Error al enviar el correo. Verifica la configuración de correo de WordPress.');
+            }
+        }
     }
 }
 

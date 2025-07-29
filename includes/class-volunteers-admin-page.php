@@ -4,7 +4,7 @@ class Volunteers_Admin_Page
     public function __construct()
     {
         add_action('admin_menu', [$this, 'add_admin_menu']);
-        add_action('wp_ajax_verify_volunteer', [$this, 'ajax_verify_volunteer']);
+        add_action('wp_ajax_verify_volunteer', [$this, 'verify_volunteer']); // Nueva acción AJAX
         add_action('admin_init', [$this, 'export_volunteers_to_excel']);
     }
 
@@ -135,7 +135,16 @@ class Volunteers_Admin_Page
                                 </td>
                                 <td><?php echo $user->user_email; ?></td>
                                 <td><?php echo get_user_meta($user->ID, 'hv_phone', true); ?></td>
-                                <td><?php echo get_user_meta($user->ID, 'hv_interest_areas', true); ?></td>
+                                <td>
+                                    <?php
+                                    $interest_areas = maybe_unserialize(get_user_meta($user->ID, 'hv_interest_areas', true));
+                                    if (is_array($interest_areas)) {
+                                        echo esc_html(implode(', ', $interest_areas));
+                                    } else {
+                                        echo esc_html($interest_areas);
+                                    }
+                                    ?>
+                                </td>
                                 <td class="verification-status">
                                     <?php if ($is_verified) : ?>
                                         <span class="badge bg-success">✅ Verificado</span>
@@ -436,38 +445,110 @@ class Volunteers_Admin_Page
         exit;
     }
 
-    // public function ajax_verify_volunteer()
-    // {
-    //     check_ajax_referer('hv_admin_nonce', 'nonce');
+    /**
+     * Verifica al voluntario y genera código único
+     */
+    public function verify_volunteer()
+    {
+        check_ajax_referer('verify_volunteer_nonce', 'security');
 
-    //     $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('No tienes permisos para realizar esta acción');
+        }
 
-    //     if (!$user_id) {
-    //         wp_send_json_error(['message' => 'ID de usuario inválido']);
-    //     }
+        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+        $observations = isset($_POST['observations']) ? sanitize_textarea_field($_POST['observations']) : '';
 
-    //     // Actualizar metadatos
-    //     update_user_meta($user_id, '_is_verified', 'yes');
-    //     update_user_meta($user_id, 'identity_verified', '1');
+        if (!$user_id) {
+            wp_send_json_error('ID de usuario no válido');
+        }
 
-    //     // Actualizar campos con Carbon Fields
-    //     if (function_exists('carbon_set_user_meta')) {
-    //         carbon_set_user_meta($user_id, 'hv_status', 'verified');
+        // Verificar que el usuario es un employer
+        if (get_user_meta($user_id, '_user_type', true) !== 'employers') {
+            wp_send_json_error('Este usuario no es un voluntario (employer)');
+        }
 
-    //         // Generar código único si no existe
-    //         if (!carbon_get_user_meta($user_id, 'hv_unique_code')) {
-    //             $code = 'VOL-' . str_pad($user_id, 8, '0', STR_PAD_LEFT) . '-' . bin2hex(random_bytes(2));
-    //             carbon_set_user_meta($user_id, 'hv_unique_code', $code);
-    //         }
-    //     }
+        // Verificar que no esté ya verificado
+        if (get_user_meta($user_id, '_is_verified', true) === 'yes') {
+            wp_send_json_error('Este usuario ya está verificado');
+        }
 
-    //     // Disparar email de confirmación
-    //     do_action('volunteer_verified', $user_id);
+        // Generar código único
+        $code = $this->generate_unique_code($user_id);
 
-    //     wp_send_json_success([
-    //         'message' => 'Usuario verificado con éxito',
-    //         'new_status' => '<span class="badge bg-success">✅ Verificado</span>',
-    //         'new_button' => '<button class="btn btn-sm btn-secondary" disabled>Verificado</button>'
-    //     ]);
-    // }
+        if (!$code) {
+            wp_send_json_error('Error al generar el código único');
+        }
+
+        // Actualizar metadatos
+        update_user_meta($user_id, '_is_verified', 'yes');
+        //update_user_meta($user_id, 'identity_verified', '1');
+        update_user_meta($user_id, 'hv_unique_code', $code);
+        update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
+        //update_user_meta($user_id, 'hv_received_observations', $observations);
+
+        try {
+            // Obtener datos de usuario
+            $user_data = [
+                'first_name' => get_user_meta($user_id, 'first_name', true),
+                'last_name' => get_user_meta($user_id, 'last_name', true),
+                'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
+                'code' => $code
+            ];
+
+            // Generar PDFs
+            $pdf_generator = new PDF_Generator();
+
+            // Generar certificado
+            $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
+
+            // Generar planilla con QR
+            $qr_url = $pdf_generator->generate_qr_code($code);
+            $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
+
+            // Enviar email con adjuntos
+            $email_manager = new Email_Manager();
+            $email_sent = $email_manager->send_verification_email($user_id, [
+                'certificate_path' => $certificate_path,
+                'planilla_path' => $planilla_path
+            ]);
+
+            if (!$email_sent) {
+                error_log("Falló envío de email para usuario: $user_id");
+                // No enviar error aquí para no frustrar el proceso completo
+            }
+
+            wp_send_json_success([
+                'code' => $code,
+                'message' => 'Voluntario verificado exitosamente'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Error en verify_volunteer: " . $e->getMessage());
+            wp_send_json_error('Error durante la verificación: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Genera un código único para el voluntario
+     */
+    private function generate_unique_code($user_id): string
+    {
+        // Formato: VOL-0000ID (ej. VOL-00001 para ID 1)
+        $code = 'VOL-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
+
+        // Verificar que el código no exista (aunque es poco probable con este formato)
+        $existing_user = get_users([
+            'meta_key' => 'hv_unique_code',
+            'meta_value' => $code,
+            'exclude' => [$user_id],
+            'number' => 1
+        ]);
+
+        if (!empty($existing_user)) {
+            // Si por alguna razón existe, añadir sufijo
+            $code = $code . '-' . uniqid();
+        }
+
+        return $code;
+    }
 }
