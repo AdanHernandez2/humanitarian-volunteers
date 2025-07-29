@@ -149,7 +149,7 @@ add_action('wp_enqueue_scripts', function () {
     }
 });
 
-// Modificar el shortcode para activar los recursos
+// shortcode para activar los recursos
 add_shortcode('volunteer_registration_form', function () {
     // Indicar que se deben cargar los recursos
     global $hv_load_resources;
@@ -157,7 +157,7 @@ add_shortcode('volunteer_registration_form', function () {
 
     ob_start();
     wp_nonce_field('volunteer_form_action', 'volunteer_nonce');
-    include plugin_dir_path(__FILE__) . 'templates/form-register.php';
+    include HV_PLUGIN_PATH  . 'templates/forms/form-register.php';
     return ob_get_clean();
 });
 

@@ -48,15 +48,15 @@ class Volunteer_Form_Handler
                 'phone',
                 'birth_date',
                 'province',
-                'address', // Nuevo campo requerido
-                'education_level', // Nuevo campo requerido
+                'address',
+                'education_level',
                 'weekend_availability',
                 'travel_availability',
                 'has_experience',
-                'reference1_name', // Nuevo campo requerido
-                'reference1_phone', // Nuevo campo requerido
-                'reference2_name', // Nuevo campo requerido
-                'reference2_phone', // Nuevo campo requerido
+                'reference1_name',
+                'reference1_phone',
+                'reference2_name',
+                'reference2_phone',
                 'terms_conditions'
             ];
 
@@ -311,7 +311,6 @@ class Volunteer_Form_Handler
                 'reference2_phone' => 'hv_reference2_phone', // Nuevo campo
                 'availability_hours' => 'hv_availability_hours', // Nuevo campo
                 'identity_document' => 'hv_identity_document',
-                'signature' => 'hv_signature' // Nuevo campo
 
             ];
 

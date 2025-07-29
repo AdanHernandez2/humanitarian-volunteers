@@ -16,7 +16,7 @@ class Email_Manager
         $this->send_email(
             get_option('admin_email'),
             'Nuevo Voluntario Registrado',
-            HV_PLUGIN_PATH . 'templates/email-admin-new.php',
+            HV_PLUGIN_PATH . 'templates/email/admin/email-admin-new.php',
             [
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->user_email,
@@ -31,7 +31,7 @@ class Email_Manager
         $this->send_email(
             $user->user_email,
             'Registro en Proceso',
-            HV_PLUGIN_PATH . 'templates/email-user-pending.php',
+            HV_PLUGIN_PATH . 'templates/email/admin/email-user-pending.php',
             [
                 'name' => $user->first_name,
                 'site_name' => get_bloginfo('name'),
@@ -64,7 +64,7 @@ class Email_Manager
         $this->send_email(
             $user->user_email,
             '¡Verificación Completada!',
-            HV_PLUGIN_PATH . 'templates/email-user-verified.php',
+            HV_PLUGIN_PATH . 'templates/email/user/email-user-verified.php',
             [
                 'name' => $user->first_name,
                 'code' => $code,
@@ -81,7 +81,7 @@ class Email_Manager
         $this->send_email(
             get_option('admin_email'),
             'Perfil de Voluntario Actualizado',
-            HV_PLUGIN_PATH . 'templates/email-admin-updated.php',
+            HV_PLUGIN_PATH . 'templates/email/user/email-admin-updated.php',
             [
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->user_email,
