@@ -154,20 +154,9 @@ class Volunteers_Admin_Page
                                 </td>
                                 <td>
                                     <a href="<?php echo admin_url('admin.php?page=volunteer_profile&user_id=' . $user->ID); ?>"
-                                        class="btn btn-sm btn-primary">
+                                        class="btn btn-sm btn-primary" style="width: 100px;">
                                         Ver Perfil
                                     </a>
-
-                                    <?php if (!$is_verified) : ?>
-                                        <button class="btn btn-sm btn-success verify-btn"
-                                            data-user-id="<?php echo $user->ID; ?>">
-                                            Verificar
-                                        </button>
-                                    <?php else : ?>
-                                        <button class="btn btn-sm btn-secondary" disabled>
-                                            Verificado
-                                        </button>
-                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -443,112 +432,5 @@ class Volunteers_Admin_Page
 
         echo "</table>";
         exit;
-    }
-
-    /**
-     * Verifica al voluntario y genera código único
-     */
-    public function verify_volunteer()
-    {
-        check_ajax_referer('verify_volunteer_nonce', 'security');
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error('No tienes permisos para realizar esta acción');
-        }
-
-        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        $observations = isset($_POST['observations']) ? sanitize_textarea_field($_POST['observations']) : '';
-
-        if (!$user_id) {
-            wp_send_json_error('ID de usuario no válido');
-        }
-
-        // Verificar que el usuario es un employer
-        if (get_user_meta($user_id, '_user_type', true) !== 'employers') {
-            wp_send_json_error('Este usuario no es un voluntario (employer)');
-        }
-
-        // Verificar que no esté ya verificado
-        if (get_user_meta($user_id, '_is_verified', true) === 'yes') {
-            wp_send_json_error('Este usuario ya está verificado');
-        }
-
-        // Generar código único
-        $code = $this->generate_unique_code($user_id);
-
-        if (!$code) {
-            wp_send_json_error('Error al generar el código único');
-        }
-
-        // Actualizar metadatos
-        update_user_meta($user_id, '_is_verified', 'yes');
-        //update_user_meta($user_id, 'identity_verified', '1');
-        update_user_meta($user_id, 'hv_unique_code', $code);
-        update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
-        //update_user_meta($user_id, 'hv_received_observations', $observations);
-
-        try {
-            // Obtener datos de usuario
-            $user_data = [
-                'first_name' => get_user_meta($user_id, 'first_name', true),
-                'last_name' => get_user_meta($user_id, 'last_name', true),
-                'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
-                'code' => $code
-            ];
-
-            // Generar PDFs
-            $pdf_generator = new PDF_Generator();
-
-            // Generar certificado
-            $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
-
-            // Generar planilla con QR
-            $qr_url = $pdf_generator->generate_qr_code($code);
-            $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
-
-            // Enviar email con adjuntos
-            $email_manager = new Email_Manager();
-            $email_sent = $email_manager->send_verification_email($user_id, [
-                'certificate_path' => $certificate_path,
-                'planilla_path' => $planilla_path
-            ]);
-
-            if (!$email_sent) {
-                error_log("Falló envío de email para usuario: $user_id");
-                // No enviar error aquí para no frustrar el proceso completo
-            }
-
-            wp_send_json_success([
-                'code' => $code,
-                'message' => 'Voluntario verificado exitosamente'
-            ]);
-        } catch (\Exception $e) {
-            error_log("Error en verify_volunteer: " . $e->getMessage());
-            wp_send_json_error('Error durante la verificación: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Genera un código único para el voluntario
-     */
-    private function generate_unique_code($user_id): string
-    {
-        // Formato: VOL-0000ID (ej. VOL-00001 para ID 1)
-        $code = 'VOL-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
-
-        // Verificar que el código no exista (aunque es poco probable con este formato)
-        $existing_user = get_users([
-            'meta_key' => 'hv_unique_code',
-            'meta_value' => $code,
-            'exclude' => [$user_id],
-            'number' => 1
-        ]);
-
-        if (!empty($existing_user)) {
-            // Si por alguna razón existe, añadir sufijo
-            $code = $code . '-' . uniqid();
-        }
-
-        return $code;
     }
 }
