@@ -443,10 +443,10 @@ class Volunteer_Profile
 
         // Actualizar metadatos
         update_user_meta($user_id, '_is_verified', 'yes');
-        //update_user_meta($user_id, 'identity_verified', '1');
+        update_user_meta($user_id, 'identity_verified', '1');
         update_user_meta($user_id, 'hv_unique_code', $code);
         update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
-        //update_user_meta($user_id, 'hv_received_observations', $observations);
+        update_user_meta($user_id, 'hv_received_observations', $observations);
 
         try {
             // Obtener datos de usuario
