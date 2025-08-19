@@ -25,7 +25,7 @@ class Verification_Page
 ?>
         <form method="GET" class="verification-form">
             <input type="text" name="hv_unique_code" placeholder="Ingrese su código único" required>
-            <button type="submit">Verificar</button>
+            <button type="submit" class="btn btn-primary">Verificar</button>
         </form>
 <?php
     }

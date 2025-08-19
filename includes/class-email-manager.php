@@ -31,7 +31,7 @@ class Email_Manager
         $this->send_email(
             $user->user_email,
             'Registro en Proceso',
-            HV_PLUGIN_PATH . 'templates/email/admin/email-user-pending.php',
+            HV_PLUGIN_PATH . 'templates/email/user/email-user-pending.php',
             [
                 'name' => $user->first_name,
                 'site_name' => get_bloginfo('name'),
@@ -111,34 +111,32 @@ class Email_Manager
             'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
         ];
 
-        // Preparar archivos adjuntos temporales
-        $temp_files = [];
+        // Preparar archivos adjuntos
+        $attachment_paths = [];
         foreach ($attachments as $attachment) {
-            if (isset($attachment['content'])) {
-                // Crear archivo temporal
+            if (is_string($attachment) && file_exists($attachment)) {
+                // Si es una ruta de archivo válida, agregar directamente
+                $attachment_paths[] = $attachment;
+            } elseif (is_array($attachment) && isset($attachment['content'])) {
+                // Si es contenido en memoria, crear archivo temporal
                 $temp_file = tmpfile();
                 fwrite($temp_file, $attachment['content']);
                 $meta = stream_get_meta_data($temp_file);
-                $temp_files[] = [
-                    'handle' => $temp_file,
-                    'path' => $meta['uri']
-                ];
+                $attachment_paths[] = $meta['uri'];
+                // Guardar handle para limpiar después
+                $temp_files[] = $temp_file;
             }
-        }
-
-        // Obtener rutas de los adjuntos
-        $attachment_paths = [];
-        foreach ($temp_files as $file) {
-            $attachment_paths[] = $file['path'];
         }
 
         // Enviar email
         $result = wp_mail($to, $subject, $message, $headers, $attachment_paths);
 
         // Limpiar archivos temporales
-        foreach ($temp_files as $file) {
-            if (is_resource($file['handle'])) {
-                fclose($file['handle']);
+        if (isset($temp_files)) {
+            foreach ($temp_files as $file) {
+                if (is_resource($file)) {
+                    fclose($file);
+                }
             }
         }
 

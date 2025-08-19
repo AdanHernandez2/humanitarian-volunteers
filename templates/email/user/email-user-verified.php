@@ -1,6 +1,6 @@
 <?php
 // templates/emails/email-user-verified.php
-include HV_PLUGIN_PATH . 'templates/email-header.php';
+include HV_PLUGIN_PATH . 'templates/email/email-header.php';
 
 /**
  * Variables disponibles:
@@ -37,4 +37,4 @@ include HV_PLUGIN_PATH . 'templates/email-header.php';
 </div>
 
 
-<?php include HV_PLUGIN_PATH . 'templates/email-footer.php'; ?>
+<?php include HV_PLUGIN_PATH . 'templates/email/email-footer.php'; ?>

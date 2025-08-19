@@ -4,7 +4,7 @@ class Volunteers_Admin_Page
     public function __construct()
     {
         add_action('admin_menu', [$this, 'add_admin_menu']);
-        add_action('wp_ajax_verify_volunteer', [$this, 'ajax_verify_volunteer']);
+        add_action('wp_ajax_verify_volunteer', [$this, 'verify_volunteer']); // Nueva acción AJAX
         add_action('admin_init', [$this, 'export_volunteers_to_excel']);
     }
 
@@ -135,7 +135,16 @@ class Volunteers_Admin_Page
                                 </td>
                                 <td><?php echo $user->user_email; ?></td>
                                 <td><?php echo get_user_meta($user->ID, 'hv_phone', true); ?></td>
-                                <td><?php echo get_user_meta($user->ID, 'hv_interest_areas', true); ?></td>
+                                <td>
+                                    <?php
+                                    $interest_areas = maybe_unserialize(get_user_meta($user->ID, 'hv_interest_areas', true));
+                                    if (is_array($interest_areas)) {
+                                        echo esc_html(implode(', ', $interest_areas));
+                                    } else {
+                                        echo esc_html($interest_areas);
+                                    }
+                                    ?>
+                                </td>
                                 <td class="verification-status">
                                     <?php if ($is_verified) : ?>
                                         <span class="badge bg-success">✅ Verificado</span>
@@ -145,20 +154,9 @@ class Volunteers_Admin_Page
                                 </td>
                                 <td>
                                     <a href="<?php echo admin_url('admin.php?page=volunteer_profile&user_id=' . $user->ID); ?>"
-                                        class="btn btn-sm btn-primary">
+                                        class="btn btn-sm btn-primary" style="width: 100px;">
                                         Ver Perfil
                                     </a>
-
-                                    <?php if (!$is_verified) : ?>
-                                        <button class="btn btn-sm btn-success verify-btn"
-                                            data-user-id="<?php echo $user->ID; ?>">
-                                            Verificar
-                                        </button>
-                                    <?php else : ?>
-                                        <button class="btn btn-sm btn-secondary" disabled>
-                                            Verificado
-                                        </button>
-                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -435,39 +433,4 @@ class Volunteers_Admin_Page
         echo "</table>";
         exit;
     }
-
-    // public function ajax_verify_volunteer()
-    // {
-    //     check_ajax_referer('hv_admin_nonce', 'nonce');
-
-    //     $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-
-    //     if (!$user_id) {
-    //         wp_send_json_error(['message' => 'ID de usuario inválido']);
-    //     }
-
-    //     // Actualizar metadatos
-    //     update_user_meta($user_id, '_is_verified', 'yes');
-    //     update_user_meta($user_id, 'identity_verified', '1');
-
-    //     // Actualizar campos con Carbon Fields
-    //     if (function_exists('carbon_set_user_meta')) {
-    //         carbon_set_user_meta($user_id, 'hv_status', 'verified');
-
-    //         // Generar código único si no existe
-    //         if (!carbon_get_user_meta($user_id, 'hv_unique_code')) {
-    //             $code = 'VOL-' . str_pad($user_id, 8, '0', STR_PAD_LEFT) . '-' . bin2hex(random_bytes(2));
-    //             carbon_set_user_meta($user_id, 'hv_unique_code', $code);
-    //         }
-    //     }
-
-    //     // Disparar email de confirmación
-    //     do_action('volunteer_verified', $user_id);
-
-    //     wp_send_json_success([
-    //         'message' => 'Usuario verificado con éxito',
-    //         'new_status' => '<span class="badge bg-success">✅ Verificado</span>',
-    //         'new_button' => '<button class="btn btn-sm btn-secondary" disabled>Verificado</button>'
-    //     ]);
-    // }
 }

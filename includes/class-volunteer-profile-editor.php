@@ -49,7 +49,7 @@ class Volunteer_Profile_Editor
 
         // Opciones para selects
         $marital_status_options = ['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Unión Libre'];
-        $education_level_options = ['Primaria', 'Secundaria', 'Universidad', 'Postgrado', 'Técnico'];
+
         $blood_type_options = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
         $shirt_size_options = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
         $gender_options = ['Masculino', 'Femenino', 'Otro'];
@@ -78,7 +78,7 @@ class Volunteer_Profile_Editor
 
             <hr class="wp-header-end">
 
-            <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" id="volunteer-profile-form">
+            <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" id="volunteer-profile-form" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="update_volunteer_profile">
                 <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
                 <?php wp_nonce_field('update_volunteer_profile_nonce', '_wpnonce'); ?>
@@ -154,14 +154,25 @@ class Volunteer_Profile_Editor
                                             </div>
 
                                             <div class="mb-3">
-                                                <label class="form-label">Nivel Académico *</label>
-                                                <select class="form-control" name="hv_education_level" required>
-                                                    <option value="">Seleccionar...</option>
-                                                    <?php foreach ($education_level_options as $option): ?>
-                                                        <option value="<?php echo esc_attr($option); ?>" <?php selected(get_user_meta($user_id, 'hv_education_level', true), $option); ?>>
-                                                            <?php echo esc_html($option); ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
+                                                <label for="hv_education_level" class="form-label">Nivel académico alcanzado <span class="text-danger">*</span></label>
+                                                <select class="form-select" id="hv_education_level" name="hv_education_level" required>
+                                                    <option value="">Seleccionar</option>
+                                                    <?php
+                                                    $education_levels = [
+                                                        'Primaria completada',
+                                                        'Primaria no completada',
+                                                        'Secundaria completada',
+                                                        'Secundaria no completada',
+                                                        'Licenciatura',
+                                                        'Maestría',
+                                                        'Doctorado'
+                                                    ];
+                                                    $selected_level = get_user_meta($user_id, 'hv_education_level', true);
+                                                    foreach ($education_levels as $level) {
+                                                        $selected = ($level === $selected_level) ? 'selected' : '';
+                                                        echo '<option value="' . esc_attr($level) . '" ' . $selected . '>' . esc_html($level) . '</option>';
+                                                    }
+                                                    ?>
                                                 </select>
                                             </div>
                                         </div>
@@ -219,15 +230,38 @@ class Volunteer_Profile_Editor
                                 <div class="card-body">
                                     <div class="mb-4">
                                         <h4>Áreas de Interés</h4>
+                                        <label class="form-label">¿En qué áreas te gustaría colaborar? (Marcar con una X) <span class="text-danger">*</span></label>
+                                        <?php
+                                        // Nueva lista de áreas de interés
+                                        $interest_areas_list = [
+                                            'Respuesta en emergencias y desastres',
+                                            'Reconstrucción y desarrollo comunitario',
+                                            'Captación y distribución de donaciones',
+                                            'Búsqueda y rescate',
+                                            'Asistencia médica',
+                                            'Asistencia psicológica',
+                                            'Búsqueda de personas, objetos y animales desaparecidos',
+                                            'Promoción en redes sociales',
+                                            'Área legal',
+                                            'Manejo de fondos',
+                                            'Logística',
+                                            'Carga y descarga de ayuda humanitaria',
+                                            'Captación de fondos',
+                                            'Captación de voluntarios',
+                                            'Apoyo tecnológico',
+                                            'Transportación (chofer)'
+                                        ];
+                                        $selected_areas = is_array($interest_areas) ? $interest_areas : [];
+                                        ?>
                                         <div class="row">
-                                            <?php foreach ($available_interest_areas as $area): ?>
-                                                <div class="col-md-3">
+                                            <?php foreach ($interest_areas_list as $index => $area): ?>
+                                                <div class="col-md-6">
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="hv_interest_areas[]"
-                                                            id="area_<?php echo sanitize_title($area); ?>"
+                                                        <input class="form-check-input x-checkbox" type="checkbox" name="hv_interest_areas[]"
+                                                            id="area_<?php echo $index; ?>"
                                                             value="<?php echo esc_attr($area); ?>"
-                                                            <?php echo (is_array($interest_areas) && in_array($area, $interest_areas)) ? 'checked' : ''; ?>>
-                                                        <label class="form-check-label" for="area_<?php echo sanitize_title($area); ?>">
+                                                            <?php if (in_array($area, $selected_areas)) echo 'checked'; ?>>
+                                                        <label class="form-check-label" for="area_<?php echo $index; ?>">
                                                             <?php echo esc_html($area); ?>
                                                         </label>
                                                     </div>
@@ -471,102 +505,129 @@ class Volunteer_Profile_Editor
 
     public function update_profile()
     {
+        // Verificar nonce y permisos
         if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'update_volunteer_profile_nonce')) {
-            wp_die('Acción no permitida');
+            $this->send_json_response(false, 'Acción no permitida');
         }
-
         if (!current_user_can('manage_options')) {
-            wp_die('No tienes permisos para realizar esta acción');
+            $this->send_json_response(false, 'No tienes permisos para realizar esta acción');
         }
-
         $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         if (!$user_id) {
-            wp_die('ID de usuario no válido');
+            $this->send_json_response(false, 'ID de usuario no válido');
         }
 
-        // Actualizar campos básicos del usuario
-        if (isset($_POST['display_name']) && isset($_POST['user_email'])) {
-            $userdata = [
-                'ID' => $user_id,
-                'display_name' => sanitize_text_field($_POST['display_name']),
-                'user_email' => sanitize_email($_POST['user_email'])
-            ];
-
-            $result = wp_update_user($userdata);
-
-            if (is_wp_error($result)) {
-                wp_die('Error al actualizar los datos del usuario: ' . $result->get_error_message());
+        // Validar campos obligatorios
+        $required = [
+            'display_name',
+            'user_email',
+            'hv_birth_date',
+            'hv_education_level',
+            'hv_address',
+            'hv_province',
+            'hv_phone',
+            'hv_reference1_name',
+            'hv_reference1_phone',
+            'hv_reference2_name',
+            'hv_reference2_phone',
+        ];
+        foreach ($required as $field) {
+            if (empty($_POST[$field])) {
+                $this->send_json_response(false, 'Falta el campo obligatorio: ' . $field);
             }
         }
 
-        // Lista de todos los campos de metadatos que podemos actualizar
+        // Actualizar datos básicos del usuario
+        $userdata = [
+            'ID' => $user_id,
+            'display_name' => sanitize_text_field($_POST['display_name']),
+            'user_email' => sanitize_email($_POST['user_email'])
+        ];
+        $result = wp_update_user($userdata);
+        if (is_wp_error($result)) {
+            $this->send_json_response(false, 'Error al actualizar los datos del usuario: ' . $result->get_error_message());
+        }
+
+        // Lista de campos de metadatos
         $meta_fields = [
-            // Información básica
             'hv_id_number',
             'hv_birth_date',
             'hv_gender',
             'hv_marital_status',
             'hv_education_level',
-
-            // Contacto
             'hv_phone',
             'hv_province',
             'hv_address',
             'hv_nationality',
             'hv_profession',
-
-            // Disponibilidad
             'hv_availability_hours',
             'hv_weekend_availability',
             'hv_travel_availability',
             'hv_international_availability',
             'hv_has_experience',
             'hv_experience_desc',
-
-            // Médica
             'hv_blood_type',
             'hv_shirt_size',
             'hv_medical_condition',
             'hv_physical_limitations',
-
-            // Referencias
             'hv_reference1_name',
             'hv_reference1_phone',
             'hv_reference2_name',
             'hv_reference2_phone',
-
-            // Verificación
             'hv_received_observations',
-            '_is_verified'
+            '_is_verified',
         ];
-
-        // Procesar campos de selección múltiple
-        $interest_areas = isset($_POST['hv_interest_areas']) ? array_map('sanitize_text_field', $_POST['hv_interest_areas']) : [];
+        // Guardar arrays
+        $interest_areas = isset($_POST['hv_interest_areas']) ? array_map('sanitize_text_field', (array)$_POST['hv_interest_areas']) : [];
         update_user_meta($user_id, 'hv_interest_areas', $interest_areas);
-
-        $availability_days = isset($_POST['hv_availability_days']) ? array_map('sanitize_text_field', $_POST['hv_availability_days']) : [];
+        $availability_days = isset($_POST['hv_availability_days']) ? array_map('sanitize_text_field', (array)$_POST['hv_availability_days']) : [];
         update_user_meta($user_id, 'hv_availability_days', $availability_days);
-
-        // Actualizar el resto de metadatos
+        // Guardar el resto de metadatos
         foreach ($meta_fields as $field) {
             if (isset($_POST[$field])) {
-                $value = is_array($_POST[$field]) ?
-                    array_map('sanitize_text_field', $_POST[$field]) :
-                    sanitize_text_field($_POST[$field]);
-
+                $value = is_array($_POST[$field]) ? array_map('sanitize_text_field', $_POST[$field]) : sanitize_text_field($_POST[$field]);
                 update_user_meta($user_id, $field, $value);
             }
         }
-
-        // Si se marca como verificado y no tiene código, generarlo
+        // Manejo de archivo subido
+        if (!empty($_FILES['identity_document']['name'])) {
+            $file = $_FILES['identity_document'];
+            $allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!in_array($file['type'], $allowed)) {
+                $this->send_json_response(false, 'Formato de documento no permitido.');
+            }
+            if ($file['size'] > 5 * 1024 * 1024) {
+                $this->send_json_response(false, 'El documento excede el tamaño máximo de 5MB.');
+            }
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            $upload = wp_handle_upload($file, ['test_form' => false]);
+            if (isset($upload['url'])) {
+                update_user_meta($user_id, 'hv_identity_document', esc_url_raw($upload['url']));
+            } else {
+                $this->send_json_response(false, 'Error al subir el documento.');
+            }
+        }
+        // Generar código único si se verifica
         if (get_user_meta($user_id, '_is_verified', true) === 'yes' && !get_user_meta($user_id, 'hv_unique_code', true)) {
             $code = 'VOL-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
             update_user_meta($user_id, 'hv_unique_code', $code);
             update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
         }
+        // Respuesta AJAX o redirección
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            $this->send_json_response(true, 'Perfil actualizado correctamente.');
+        } else {
+            wp_redirect(admin_url('admin.php?page=volunteer_profile&user_id=' . $user_id . '&updated=1'));
+            exit;
+        }
+    }
 
-        // Redirigir de vuelta al perfil con mensaje de éxito
-        wp_redirect(admin_url('admin.php?page=volunteer_profile&user_id=' . $user_id . '&updated=1'));
+    private function send_json_response($success, $message)
+    {
+        wp_send_json([
+            'success' => $success,
+            'message' => $message
+        ]);
         exit;
     }
 }

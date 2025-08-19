@@ -2,7 +2,7 @@
 /*
 Plugin Name: Humanitarian Volunteers
 Description: Sistema de gestión de voluntarios humanitarios
-Version: 2.1
+Version: 2.6
 Author: Humanitarios
 */
 
@@ -106,6 +106,24 @@ add_action('admin_enqueue_scripts', function ($hook) {
                 );
 
                 // Datos para AJAX
+                wp_localize_script('hv-admin-scripts', 'hv_admin', [
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('hv_admin_nonce')
+                ]);
+            }
+        }
+
+        // Scripts para perfil y edición de voluntario
+        if ($is_volunteers_page || $is_profile_page || $is_profile_page_edit) {
+            $admin_js = plugin_dir_path(__FILE__) . 'assets/js/admin-volunteers.js';
+            if (file_exists($admin_js)) {
+                wp_enqueue_script(
+                    'hv-admin-scripts',
+                    plugin_dir_url(__FILE__) . 'assets/js/admin-volunteers.js',
+                    ['jquery'],
+                    filemtime($admin_js),
+                    true
+                );
                 wp_localize_script('hv-admin-scripts', 'hv_admin', [
                     'ajax_url' => admin_url('admin-ajax.php'),
                     'nonce' => wp_create_nonce('hv_admin_nonce')
