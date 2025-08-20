@@ -32,22 +32,22 @@ class Verification_Page
 
     private function handle_verification()
     {
-        $code = sanitize_text_field($_GET['hv_unique_code']);
-        $user = $this->get_user_by_code($code);
+        $token = sanitize_text_field($_GET['hv_unique_code']);
+        $user = $this->get_user_by_code($token);
 
         if (!$user) {
-            echo '<div class="error">Código inválido o expirado</div>';
+            echo '<div class="error">Debe escanear Qr para validar el usuario</div>';
             return;
         }
 
         $this->display_certificate($user->ID);
     }
 
-    private function get_user_by_code($code)
+    private function get_user_by_code($token)
     {
         $users = get_users([
-            'meta_key' => 'hv_unique_code',
-            'meta_value' => $code,
+            'meta_key' => 'hv_verification_token',
+            'meta_value' => $token,
             'number' => 1
         ]);
 

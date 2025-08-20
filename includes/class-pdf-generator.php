@@ -65,81 +65,100 @@ class PDF_Generator
     /**
      * Genera el certificado optimizado
      */
+
     public function generate_certificate($user_id, $user_data)
     {
+        $qr_path = null;
         try {
             $mpdf = new Mpdf($this->get_mpdf_config('L'));
 
-            // 1. Primero el HTML sin la imagen
-            $html = $this->render_certificate_template($user_data, false);
+            // Generar QR code como archivo temporal
+            $qr_path = $this->generate_qr_code($user_data['token'] ?? '');
+
+            // Generar HTML del certificado SIN la imagen de fondo
+            $html = $this->render_certificate_content($user_data, false);
             $mpdf->WriteHTML($html);
 
-            // 2. Añadir la imagen después como elemento separado
+            // Añadir imagen de fondo como elemento de imagen
             $img_path = HV_PLUGIN_PATH . 'assets/img/certificado-bg.jpg';
             if (!file_exists($img_path)) {
                 throw new Exception("Imagen de certificado no encontrada en: $img_path");
             }
 
+            // Agregar imagen de fondo (cover completo)
             $mpdf->Image($img_path, 0, 0, 297, 210, 'jpg', '', true, false);
+
+            // Agregar QR code como imagen
+            $mpdf->Image($qr_path, 140, 150, 25, 25, 'svg', '', true, false);
 
             $filename = "certificado-{$user_data['first_name']}-{$user_id}.pdf";
             $filepath = $this->get_pdf_path($filename);
 
             $mpdf->Output($filepath, \Mpdf\Output\Destination::FILE);
 
+            // Eliminar archivo temporal del QR
+            if ($qr_path && file_exists($qr_path)) {
+                unlink($qr_path);
+            }
+
             return $filepath;
         } catch (\Exception $e) {
+            // Eliminar archivo temporal del QR en caso de error
+            if ($qr_path && file_exists($qr_path)) {
+                unlink($qr_path);
+            }
+
             error_log("Error generando certificado: " . $e->getMessage());
             throw new Exception("Error al generar el certificado: " . $e->getMessage());
         }
     }
 
     /**
-     * Render optimizado para certificado
+     * Renderiza el contenido HTML del certificado
      */
-    private function render_certificate_template($user_data, $include_image = true)
+    private function render_certificate_content($user_data, $include_image = false)
     {
-        $fecha = date('d/m/Y', strtotime($user_data['fecha_recepcion']));
+        $fecha = date('d/m/Y', strtotime($user_data['fecha_recepcion'] ?? 'now'));
 
         $html = '
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-            <style>
-                body {
-                    margin: 0;
-                    padding: 0;
-                    width: 297mm;
-                    height: 210mm;
-                    position: relative;
-                    font-family: dejavusans;
-                }
-                .nombre {
-                    position: absolute;
-                    top: 350px;
-                    left: 0;
-                    width: 100%;
-                    font-size: 28pt;
-                    font-weight: bold;
-                    color: #000;
-                    text-align: center;
-                    z-index: 2;
-                }
-                .descripcion {
-                    position: absolute;
-                    top: 25%;
-                    right: 5%;
-                    text-align: right;
-                    font-size: 12pt;
-                    font-weight: bold;
-                    width: 650px;
-                    line-height: 1.5;
-                    z-index: 2;
-                }
-            </style>
-        </head>
-        <body>';
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                width: 297mm;
+                height: 210mm;
+                position: relative;
+                font-family: dejavusans;
+            }
+            .nombre {
+                position: absolute;
+                top: 400px;
+                left: 0;
+                width: 100%;
+                font-size: 28pt;
+                font-weight: bold;
+                color: #000;
+                text-align: center;
+                z-index: 2;
+            }
+            .descripcion {
+                position: absolute;
+                top: 27%;
+                right: 5%;
+                text-align: right;
+                font-size: 12pt;
+                font-weight: bold;
+                width: 680px;
+                line-height: 1.5;
+                z-index: 2;
+            }
+        </style>
+    </head>
+    <body>';
 
         if ($include_image) {
             $img_data = base64_encode(file_get_contents(HV_PLUGIN_PATH . 'assets/img/certificado-bg.jpg'));
@@ -147,17 +166,20 @@ class PDF_Generator
         }
 
         $html .= '
-            <div class="nombre">' . htmlspecialchars($user_data['first_name']) . ' ' . htmlspecialchars($user_data['last_name']) . '</div>
-            <div class="descripcion">
-                RECONOCEMOS FORMALMENTE SU INCORPORACIÓN COMO VOLUNTARIO<br>
-                ACTIVO DE LA ORGANIZACIÓN HUMANITARIOS DE LA REPÚBLICA<br>
-                DOMINICANA A PARTIR DEL ' . htmlspecialchars($fecha) . ' A:
-            </div>
-        </body>
-        </html>';
+
+        <div class="nombre">' . htmlspecialchars($user_data['first_name']) . ' ' . htmlspecialchars($user_data['last_name']) . '</div>
+        <div class="descripcion">
+            RECONOCEMOS FORMALMENTE SU INCORPORACIÓN COMO VOLUNTARIO<br>
+            ACTIVO DE LA ORGANIZACIÓN HUMANITARIOS DE LA REPÚBLICA<br>
+            DOMINICANA A PARTIR DEL ' . htmlspecialchars($fecha) . ' A:
+        </div>
+    </body>
+    </html>';
 
         return $html;
     }
+
+
 
     /**
      * Genera la planilla optimizada basada en tu versión funcional
@@ -435,9 +457,42 @@ class PDF_Generator
     }
 
     /**
+     * Genera un código QR con URL de verificación por token
+     * Recibe el token directamente como parámetro
+     */
+    public function generate_qr_code($token)
+    {
+        // Crear la URL de verificación
+        $qr_url = home_url("/verificacion-voluntario/?hv_unique_code={$token}");
+
+        $renderer = new ImageRenderer(
+            new RendererStyle(200),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+
+        // Generar QR con la URL en lugar del token
+        $svgContent = $writer->writeString($qr_url);
+
+        // Guardar como archivo temporal
+        $upload_dir = wp_upload_dir();
+        $temp_dir = trailingslashit($upload_dir['basedir']) . 'temp/';
+        if (!file_exists($temp_dir)) {
+            wp_mkdir_p($temp_dir);
+        }
+
+        $filename = 'qr_' . md5($token) . '.svg';
+        $filepath = $temp_dir . $filename;
+
+        file_put_contents($filepath, $svgContent);
+
+        return $filepath;
+    }
+
+    /**
      * Genera un código QR en formato SVG base64
      */
-    public function generate_qr_code($code)
+    /*   public function generate_qr_code($code)
     {
         $qr_url = home_url("/verificacion-voluntario/?hv_unique_code={$code}");
 
@@ -450,7 +505,7 @@ class PDF_Generator
         $svg = $writer->writeString($qr_url);
 
         return 'data:image/svg+xml;base64,' . base64_encode($svg);
-    }
+    }*/
 
     /**
      * Obtiene la ruta para guardar PDFs
