@@ -436,15 +436,21 @@ class Volunteer_Profile
 
         // Generar código único
         $code = $this->generate_unique_code($user_id);
+        //Generar token
+        $token = $this->generate_verification_token($user_id);
 
         if (!$code) {
             wp_send_json_error('Error al generar el código único');
+        }
+        if (!$token) {
+            wp_send_json_error('Error al generar el token único');
         }
 
         // Actualizar metadatos
         update_user_meta($user_id, '_is_verified', 'yes');
         update_user_meta($user_id, 'identity_verified', '1');
         update_user_meta($user_id, 'hv_unique_code', $code);
+        update_user_meta($user_id, 'hv_verification_token', $token);
         update_user_meta($user_id, 'hv_date_received', current_time('mysql'));
         update_user_meta($user_id, 'hv_received_observations', $observations);
 
@@ -454,7 +460,8 @@ class Volunteer_Profile
                 'first_name' => get_user_meta($user_id, 'first_name', true),
                 'last_name' => get_user_meta($user_id, 'last_name', true),
                 'fecha_recepcion' => get_user_meta($user_id, 'hv_date_received', true),
-                'code' => $code
+                'code' => $code,
+                'token' => $token
             ];
 
             // Generar PDFs
@@ -464,7 +471,8 @@ class Volunteer_Profile
             $certificate_path = $pdf_generator->generate_certificate($user_id, $user_data);
 
             // Generar planilla con QR
-            $qr_url = $pdf_generator->generate_qr_code($code);
+            //$qr_url = $pdf_generator->generate_qr_code($code);
+            $qr_url = $pdf_generator->generate_qr_code($token);
             $planilla_path = $pdf_generator->generate_planilla($user_id, $user_data, $qr_url);
 
             // Enviar email con adjuntos
@@ -487,6 +495,30 @@ class Volunteer_Profile
             error_log("Error en verify_volunteer: " . $e->getMessage());
             wp_send_json_error('Error durante la verificación: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Genera un token único y seguro para el voluntario
+     */
+    private function generate_verification_token($user_id): string
+    {
+        // Generar token criptográficamente seguro (32 caracteres)
+        $token = bin2hex(random_bytes(16));
+
+        // Verificar unicidad (extremadamente improbable que se repita)
+        $existing_user = get_users([
+            'meta_key' => 'hv_verification_token',
+            'meta_value' => $token,
+            'exclude' => [$user_id],
+            'number' => 1
+        ]);
+
+        // Regenerar si existe colisión (caso casi imposible)
+        if (!empty($existing_user)) {
+            return $this->generate_verification_token($user_id);
+        }
+
+        return $token;
     }
 
     /**
