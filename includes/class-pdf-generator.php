@@ -337,11 +337,6 @@ class PDF_Generator
                 <!-- Dirección institucional -->
                 <td width="50%">
                     <img class="logo" src="' . $logo_path . '" alt="Logo"><br />
-                    <strong>Dr. Fernando Vásquez Páez</strong><br />
-                    Ministerio de Salud Pública<br />
-                    Calle Oviedo no. 113, Distrito Nacional<br />
-                    Santo Domingo, 10308<br />
-                    República Dominicana
                 </td>
 
                 <!-- Contacto y fecha -->
