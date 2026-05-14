@@ -2,7 +2,7 @@
 
 **Plugin de WordPress para la gestión integral de voluntarios y fundaciones.**
 
-[![Versión](https://img.shields.io/badge/versión-1.0.0-blue.svg)](https://github.com/AdanHernandez2/humanitarian-volunteers)
+[![Versión](https://img.shields.io/badge/versión-2.6.0-blue.svg)](https://github.com/AdanHernandez2/humanitarian-volunteers)
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-21759b.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb3.svg)](https://www.php.net/)
 [![Licencia](https://img.shields.io/badge/licencia-GPL--2.0-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
@@ -95,19 +95,19 @@ El plugin está diseñado para heredar los estilos del tema activo, pero puedes 
 ## 🧩 Estructura del plugin
 
 humanitarian-volunteers/
-├── admin/ # Panel de administración
-│ ├── class-admin.php # Gestión del panel admin
-│ └── class-users.php # Gestión de usuarios
-├── includes/ # Funcionalidades principales
-│ ├── class-register.php # Sistema de registro
-│ ├── class-email.php # Sistema de notificaciones
-│ ├── class-certificate.php # Generación de certificados
-│ └── class-qr.php # Sistema de códigos QR
-├── assets/ # Recursos estáticos
-│ ├── css/
-│ └── js/
-├── templates/ # Plantillas de frontend
-├── languages/ # Traducciones
+├── admin/                     # Panel de administración
+│   ├── class-admin.php        # Gestión del panel admin
+│   └── class-users.php        # Gestión de usuarios
+├── includes/                  # Funcionalidades principales
+│   ├── class-register.php     # Sistema de registro
+│   ├── class-email.php        # Sistema de notificaciones
+│   ├── class-certificate.php  # Generación de certificados
+│   └── class-qr.php           # Sistema de códigos QR
+├── assets/                    # Recursos estáticos
+│   ├── css/
+│   └── js/
+├── templates/                 # Plantillas de frontend
+├── languages/                 # Traducciones
 └── humanitarian-volunteers.php # Archivo principal
 
 ## 🤝 Contribuir
