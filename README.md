@@ -94,6 +94,7 @@ El plugin está diseñado para heredar los estilos del tema activo, pero puedes 
 
 ## 🧩 Estructura del plugin
 
+```text
 humanitarian-volunteers/
 ├── admin/                     # Panel de administración
 │   ├── class-admin.php        # Gestión del panel admin
@@ -109,6 +110,7 @@ humanitarian-volunteers/
 ├── templates/                 # Plantillas de frontend
 ├── languages/                 # Traducciones
 └── humanitarian-volunteers.php # Archivo principal
+```
 
 ## 🤝 Contribuir
 
